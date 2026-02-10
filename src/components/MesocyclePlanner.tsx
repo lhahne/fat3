@@ -1,0 +1,244 @@
+import { useMemo, useState } from 'react';
+import {
+  generateProgram,
+  getRecommendedDefaults,
+  normalizeInputs,
+  type Focus,
+  type Level,
+  type PlannerInputs,
+} from '../lib/planner';
+import './MesocyclePlanner.css';
+
+type OverriddenFields = {
+  mesocycleWeeks: boolean;
+  sessionsPerWeek: boolean;
+};
+
+const FOCUS_OPTIONS: Array<{ value: Focus; label: string }> = [
+  { value: 'strength', label: 'Strength' },
+  { value: 'endurance', label: 'Endurance' },
+  { value: 'mixed', label: 'Mixed' },
+];
+
+const LEVEL_OPTIONS: Array<{ value: Level; label: string }> = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+];
+
+function createInitialInputs(): PlannerInputs {
+  const defaults = getRecommendedDefaults('beginner', 'strength');
+  return normalizeInputs({
+    focus: 'strength',
+    level: 'beginner',
+    mesocycleWeeks: defaults.mesocycleWeeks,
+    sessionsPerWeek: defaults.sessionsPerWeek,
+    autoDeload: true,
+  });
+}
+
+function objectiveLabel(objective: string): string {
+  if (objective === 'build') return 'Build';
+  if (objective === 'push') return 'Push';
+  if (objective === 'deload') return 'Deload';
+  return 'Taper';
+}
+
+function sessionLabel(type: string): string {
+  if (type === 'strength') return 'Strength';
+  if (type === 'endurance') return 'Endurance';
+  if (type === 'mixed') return 'Mixed';
+  if (type === 'deload') return 'Deload';
+  if (type === 'recovery') return 'Recovery';
+  return 'Rest';
+}
+
+export default function MesocyclePlanner() {
+  const [inputs, setInputs] = useState<PlannerInputs>(createInitialInputs);
+  const [overridden, setOverridden] = useState<OverriddenFields>({
+    mesocycleWeeks: false,
+    sessionsPerWeek: false,
+  });
+
+  const recommended = useMemo(() => getRecommendedDefaults(inputs.level, inputs.focus), [inputs.level, inputs.focus]);
+  const program = useMemo(() => generateProgram(inputs), [inputs]);
+
+  function applyRecommended(level: Level, focus: Focus, preserve: OverriddenFields, current: PlannerInputs): PlannerInputs {
+    const defaults = getRecommendedDefaults(level, focus);
+    const next: PlannerInputs = {
+      ...current,
+      level,
+      focus,
+      mesocycleWeeks: preserve.mesocycleWeeks ? current.mesocycleWeeks : defaults.mesocycleWeeks,
+      sessionsPerWeek: preserve.sessionsPerWeek ? current.sessionsPerWeek : defaults.sessionsPerWeek,
+      autoDeload: true,
+    };
+
+    if (focus === 'mixed') {
+      next.mixedBias = current.mixedBias ?? defaults.mixedBias ?? 50;
+    } else {
+      delete next.mixedBias;
+    }
+
+    return normalizeInputs(next);
+  }
+
+  function handleFocusChange(value: Focus) {
+    setInputs((current) => applyRecommended(current.level, value, overridden, current));
+  }
+
+  function handleLevelChange(value: Level) {
+    setInputs((current) => applyRecommended(value, current.focus, overridden, current));
+  }
+
+  function handleReset() {
+    setOverridden({ mesocycleWeeks: false, sessionsPerWeek: false });
+    setInputs((current) => {
+      const defaults = getRecommendedDefaults(current.level, current.focus);
+      return normalizeInputs({
+        ...current,
+        mesocycleWeeks: defaults.mesocycleWeeks,
+        sessionsPerWeek: defaults.sessionsPerWeek,
+        mixedBias: current.focus === 'mixed' ? (defaults.mixedBias ?? 50) : undefined,
+        autoDeload: true,
+      });
+    });
+  }
+
+  return (
+    <div className="planner-shell">
+      <section className="controls" aria-label="Planner controls">
+        <h1>Mesocycle Planner</h1>
+
+        <label htmlFor="focus-select">Program focus</label>
+        <select
+          id="focus-select"
+          aria-label="Program focus"
+          value={inputs.focus}
+          onChange={(event) => handleFocusChange(event.target.value as Focus)}
+        >
+          {FOCUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        {inputs.focus === 'mixed' && (
+          <>
+            <label htmlFor="mixed-bias">Mixed bias</label>
+            <input
+              id="mixed-bias"
+              aria-label="Mixed bias"
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={inputs.mixedBias ?? 50}
+              onChange={(event) =>
+                setInputs((current) => normalizeInputs({ ...current, mixedBias: Number(event.target.value), autoDeload: true }))
+              }
+            />
+            <output htmlFor="mixed-bias">{inputs.mixedBias ?? 50}% endurance</output>
+          </>
+        )}
+
+        <label htmlFor="weeks-input">Mesocycle length (weeks)</label>
+        <input
+          id="weeks-input"
+          aria-label="Mesocycle length (weeks)"
+          type="number"
+          min={4}
+          max={12}
+          value={inputs.mesocycleWeeks}
+          onChange={(event) => {
+            setOverridden((current) => ({ ...current, mesocycleWeeks: true }));
+            setInputs((current) => normalizeInputs({ ...current, mesocycleWeeks: Number(event.target.value), autoDeload: true }));
+          }}
+        />
+
+        <label htmlFor="level-select">Initial fitness level</label>
+        <select
+          id="level-select"
+          aria-label="Initial fitness level"
+          value={inputs.level}
+          onChange={(event) => handleLevelChange(event.target.value as Level)}
+        >
+          {LEVEL_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor="sessions-input">Sessions per week</label>
+        <input
+          id="sessions-input"
+          aria-label="Sessions per week"
+          type="number"
+          min={2}
+          max={6}
+          value={inputs.sessionsPerWeek}
+          onChange={(event) => {
+            setOverridden((current) => ({ ...current, sessionsPerWeek: true }));
+            setInputs((current) => normalizeInputs({ ...current, sessionsPerWeek: Number(event.target.value), autoDeload: true }));
+          }}
+        />
+
+        <p className="deload-note">Auto-deload: enabled</p>
+        <button type="button" onClick={handleReset}>
+          Reset to recommended
+        </button>
+
+        <dl className="summary">
+          <div>
+            <dt>Recommended length</dt>
+            <dd>{recommended.mesocycleWeeks} weeks</dd>
+          </div>
+          <div>
+            <dt>Recommended sessions</dt>
+            <dd>{recommended.sessionsPerWeek} / week</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="calendar" aria-label="Program calendar">
+        <div className="weekday-row" aria-hidden="true">
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span>Sat</span>
+          <span>Sun</span>
+        </div>
+
+        {program.weeks.map((week) => (
+          <article key={week.weekIndex} className="week-row">
+            <header>
+              <h2>Week {week.weekIndex}</h2>
+              <p>
+                {objectiveLabel(week.objective)} - {week.plannedSessionCount} sessions
+              </p>
+            </header>
+            <div className="day-grid">
+              {week.days.map((day) => (
+                <div
+                  key={`${week.weekIndex}-${day.dayIndex}`}
+                  className={`day-box type-${day.sessionType}`}
+                  aria-label={`Week ${week.weekIndex}, ${day.dateLabel}, ${sessionLabel(day.sessionType)}, effort ${day.effort} of 5, objective ${week.objective}`}
+                >
+                  <strong>{day.dateLabel}</strong>
+                  <span>{sessionLabel(day.sessionType)}</span>
+                  <span className="effort" aria-hidden="true">
+                    {'●'.repeat(day.effort)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}

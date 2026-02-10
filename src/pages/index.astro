@@ -1,19 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CounterCard from '../components/CounterCard';
+import MesocyclePlanner from '../components/MesocyclePlanner';
 ---
 
 <Layout>
-	<main>
-		<CounterCard client:load />
-	</main>
+	<MesocyclePlanner client:load />
 </Layout>
-
-<style>
-	main {
-		min-height: 100vh;
-		display: grid;
-		place-items: center;
-		padding: 2rem;
-	}
-</style>

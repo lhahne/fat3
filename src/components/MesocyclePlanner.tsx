@@ -11,7 +11,7 @@ import {
   type StrengthProfile,
 } from '../lib/planner';
 import { exportProgramAsExcel, exportProgramAsPdf } from '../lib/exports/service';
-import type { ExportDetail, ExportOptions, ExportScope, PdfMode } from '../lib/exports/types';
+import type { ExportDetail, ExportOptions, ExportScope, Orientation, PaperSize, PdfMode } from '../lib/exports/types';
 import './MesocyclePlanner.css';
 
 type OverriddenFields = {
@@ -73,6 +73,12 @@ export default function MesocyclePlanner() {
   const [selectedWeeksText, setSelectedWeeksText] = useState('');
   const [exportDetail, setExportDetail] = useState<ExportDetail>('full');
   const [pdfMode, setPdfMode] = useState<PdfMode>('detailed');
+  const [paperSize, setPaperSize] = useState<PaperSize>('letter');
+  const [orientation, setOrientation] = useState<Orientation>('auto');
+  const [grayscale, setGrayscale] = useState(false);
+  const [inkSaver, setInkSaver] = useState(true);
+  const [includeLegend, setIncludeLegend] = useState(true);
+  const [includeProgressionChart, setIncludeProgressionChart] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [overridden, setOverridden] = useState<OverriddenFields>({
     mesocycleWeeks: false,
@@ -142,11 +148,12 @@ export default function MesocyclePlanner() {
       selectedWeeks: exportScope === 'selected' ? parseSelectedWeeks(selectedWeeksText) : undefined,
       detail: exportDetail,
       pdfMode,
-      paperSize: 'letter',
-      orientation: 'auto',
-      grayscale: false,
-      includeLegend: true,
-      includeProgressionChart: true,
+      paperSize,
+      orientation,
+      grayscale,
+      inkSaver,
+      includeLegend,
+      includeProgressionChart,
     };
   }
 
@@ -323,6 +330,73 @@ export default function MesocyclePlanner() {
             <option value="compact">Compact</option>
             <option value="detailed">Detailed</option>
           </select>
+
+          <label htmlFor="paper-size">Paper size</label>
+          <select
+            id="paper-size"
+            aria-label="Paper size"
+            value={paperSize}
+            onChange={(event) => setPaperSize(event.target.value as PaperSize)}
+          >
+            <option value="letter">Letter</option>
+            <option value="a4">A4</option>
+          </select>
+
+          <label htmlFor="orientation">Orientation</label>
+          <select
+            id="orientation"
+            aria-label="Orientation"
+            value={orientation}
+            onChange={(event) => setOrientation(event.target.value as Orientation)}
+          >
+            <option value="auto">Auto</option>
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+
+          <label htmlFor="grayscale-toggle">
+            <input
+              id="grayscale-toggle"
+              aria-label="Grayscale"
+              type="checkbox"
+              checked={grayscale}
+              onChange={(event) => setGrayscale(event.target.checked)}
+            />
+            Grayscale
+          </label>
+
+          <label htmlFor="ink-saver-toggle">
+            <input
+              id="ink-saver-toggle"
+              aria-label="Ink saver"
+              type="checkbox"
+              checked={inkSaver}
+              onChange={(event) => setInkSaver(event.target.checked)}
+            />
+            Ink saver
+          </label>
+
+          <label htmlFor="legend-toggle">
+            <input
+              id="legend-toggle"
+              aria-label="Include legend"
+              type="checkbox"
+              checked={includeLegend}
+              onChange={(event) => setIncludeLegend(event.target.checked)}
+            />
+            Include legend
+          </label>
+
+          <label htmlFor="progression-toggle">
+            <input
+              id="progression-toggle"
+              aria-label="Include progression chart"
+              type="checkbox"
+              checked={includeProgressionChart}
+              onChange={(event) => setIncludeProgressionChart(event.target.checked)}
+            />
+            Include progression chart
+          </label>
 
           <button type="button" onClick={handleExcelExport}>
             Export Excel (.xlsx)

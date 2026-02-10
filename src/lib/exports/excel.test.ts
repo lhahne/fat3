@@ -22,6 +22,7 @@ describe('buildExcelWorkbook', () => {
       paperSize: 'letter',
       orientation: 'auto',
       grayscale: false,
+      inkSaver: true,
       includeLegend: true,
       includeProgressionChart: true,
     });

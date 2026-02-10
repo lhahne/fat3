@@ -45,6 +45,7 @@ describe('export service', () => {
       paperSize: 'letter',
       orientation: 'auto',
       grayscale: false,
+      inkSaver: true,
       includeLegend: true,
       includeProgressionChart: false,
     });
@@ -95,6 +96,7 @@ describe('export service', () => {
       paperSize: 'letter',
       orientation: 'auto',
       grayscale: false,
+      inkSaver: true,
       includeLegend: true,
       includeProgressionChart: false,
     });

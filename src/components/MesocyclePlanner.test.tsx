@@ -74,6 +74,12 @@ describe('MesocyclePlanner', () => {
     fireEvent.change(screen.getByLabelText('Selected weeks'), { target: { value: '1,2' } });
     fireEvent.change(screen.getByLabelText('Export detail'), { target: { value: 'calendar-only' } });
     fireEvent.change(screen.getByLabelText('PDF mode'), { target: { value: 'compact' } });
+    fireEvent.change(screen.getByLabelText('Paper size'), { target: { value: 'a4' } });
+    fireEvent.change(screen.getByLabelText('Orientation'), { target: { value: 'portrait' } });
+    fireEvent.click(screen.getByLabelText('Grayscale'));
+    fireEvent.click(screen.getByLabelText('Ink saver'));
+    fireEvent.click(screen.getByLabelText('Include legend'));
+    fireEvent.click(screen.getByLabelText('Include progression chart'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Export Excel (.xlsx)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
@@ -81,5 +87,17 @@ describe('MesocyclePlanner', () => {
     await waitFor(() => expect(excelMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(pdfMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByText('Exported PDF file.')).toBeInTheDocument());
+    expect(pdfMock.mock.calls[0]?.[1]).toEqual({
+      scope: 'selected',
+      selectedWeeks: [1, 2],
+      detail: 'calendar-only',
+      pdfMode: 'compact',
+      paperSize: 'a4',
+      orientation: 'portrait',
+      grayscale: true,
+      inkSaver: false,
+      includeLegend: false,
+      includeProgressionChart: true,
+    });
   });
 });

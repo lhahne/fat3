@@ -14,6 +14,7 @@ export type ExportOptions = {
   paperSize: PaperSize;
   orientation: Orientation;
   grayscale: boolean;
+  inkSaver: boolean;
   includeLegend: boolean;
   includeProgressionChart: boolean;
 };
@@ -63,14 +64,44 @@ export type PdfRenderPage =
       title: string;
       subtitle?: string;
       lines: string[];
+      howToUse: string[];
     }
   | {
-      kind: 'week';
+      kind: 'weekOverview';
       title: string;
       subtitle?: string;
       weekIndex: number;
       objective: string;
+      isDeloadWeek: boolean;
+      weekSummary: string;
       days: ProgramOutput['weeks'][number]['days'];
+      pageNumber: number;
+      pageCount: number;
+      exportTimestamp?: string;
+    }
+  | {
+      kind: 'sessionDetail';
+      title: string;
+      subtitle?: string;
+      weekIndex: number;
+      dayLabel: string;
+      objective: string;
+      effort: number;
+      sessionType: string;
+      target?: string;
+      sessionTitle: string;
+      blocks: NonNullable<ProgramOutput['weeks'][number]['days'][number]['workout']>['blocks'];
+      notes?: string;
+      pageNumber: number;
+      pageCount: number;
+    }
+  | {
+      kind: 'progressionSummary';
+      title: string;
+      subtitle?: string;
+      rows: ProgressionRow[];
+      pageNumber: number;
+      pageCount: number;
     };
 
 export type PdfRenderModel = {

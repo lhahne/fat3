@@ -117,8 +117,9 @@ function mapProgressionRows(weeks: ProgramOutput['weeks']): ProgressionRow[] {
   });
 }
 
-export function mapProgramToExportModel(program: ProgramOutput, options: ExportOptions): ExportModel {
+export function mapProgramToExportModel(program: ProgramOutput, options: ExportOptions, nowIso?: string): ExportModel {
   const filteredWeeks = selectWeeks(program, options);
+  const resolvedNowIso = nowIso ?? new Date().toISOString();
 
   const totalSessions = filteredWeeks.reduce((acc, week) => acc + week.plannedSessionCount, 0);
   const totalStrength = filteredWeeks.reduce((acc, week) => acc + week.summary.strengthSessions, 0);
@@ -136,8 +137,8 @@ export function mapProgramToExportModel(program: ProgramOutput, options: ExportO
     { key: 'Sessions / Week', value: String(program.inputs.sessionsPerWeek) },
     { key: 'Mixed Bias (%)', value: program.inputs.mixedBias != null ? String(program.inputs.mixedBias) : '' },
     { key: 'Auto Deload', value: 'true' },
-    { key: 'Generated At', value: new Date().toISOString() },
-    { key: 'Exported At', value: new Date().toISOString() },
+    { key: 'Generated At', value: resolvedNowIso },
+    { key: 'Exported At', value: resolvedNowIso },
     { key: 'Total Sessions', value: String(totalSessions) },
     { key: 'Total Strength Sessions', value: String(totalStrength) },
     { key: 'Total Endurance Sessions', value: String(totalEndurance) },

@@ -7,6 +7,7 @@ describe('MesocyclePlanner', () => {
 
     expect(screen.getByRole('heading', { name: 'Mesocycle Planner' })).toBeInTheDocument();
     expect(screen.getByLabelText('Program focus')).toBeInTheDocument();
+    expect(screen.getByLabelText('Strength profile')).toBeInTheDocument();
 
     expect(screen.getByText('Week 1')).toBeInTheDocument();
     expect(screen.getAllByText(/Mon|Tue|Wed|Thu|Fri|Sat|Sun/).length).toBeGreaterThan(0);
@@ -35,5 +36,16 @@ describe('MesocyclePlanner', () => {
 
     expect((screen.getByLabelText('Mesocycle length (weeks)') as HTMLInputElement).value).toBe('10');
     expect((screen.getByLabelText('Sessions per week') as HTMLInputElement).value).toBe('5');
+  });
+
+  it('shows workout details with selected strength profile', () => {
+    render(<MesocyclePlanner />);
+
+    fireEvent.change(screen.getByLabelText('Strength profile'), { target: { value: 'endurance-support' } });
+    fireEvent.click(screen.getByRole('button', { name: /Week 1, Mon, Strength/i }));
+
+    expect(screen.getByRole('heading', { name: 'Session details' })).toBeInTheDocument();
+    expect(screen.getByText('Profile: Endurance Support Strength')).toBeInTheDocument();
+    expect(screen.getAllByText(/RIR/).length).toBeGreaterThan(0);
   });
 });

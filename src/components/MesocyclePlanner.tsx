@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
+  STRENGTH_PROFILE_LABELS,
   generateProgram,
   getRecommendedDefaults,
   normalizeInputs,
+  type DayPlan,
   type Focus,
   type Level,
   type PlannerInputs,
+  type StrengthProfile,
 } from '../lib/planner';
 import './MesocyclePlanner.css';
 
@@ -26,6 +29,13 @@ const LEVEL_OPTIONS: Array<{ value: Level; label: string }> = [
   { value: 'advanced', label: 'Advanced' },
 ];
 
+const STRENGTH_PROFILE_OPTIONS: Array<{ value: StrengthProfile; label: string }> = [
+  { value: 'bodybuilding', label: 'Bodybuilding' },
+  { value: 'powerlifting', label: 'Powerlifting' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'endurance-support', label: 'Endurance Support Strength' },
+];
+
 function createInitialInputs(): PlannerInputs {
   const defaults = getRecommendedDefaults('beginner', 'strength');
   return normalizeInputs({
@@ -34,6 +44,7 @@ function createInitialInputs(): PlannerInputs {
     mesocycleWeeks: defaults.mesocycleWeeks,
     sessionsPerWeek: defaults.sessionsPerWeek,
     autoDeload: true,
+    strengthProfile: 'balanced',
   });
 }
 
@@ -55,6 +66,7 @@ function sessionLabel(type: string): string {
 
 export default function MesocyclePlanner() {
   const [inputs, setInputs] = useState<PlannerInputs>(createInitialInputs);
+  const [selectedDay, setSelectedDay] = useState<DayPlan | null>(null);
   const [overridden, setOverridden] = useState<OverriddenFields>({
     mesocycleWeeks: false,
     sessionsPerWeek: false,
@@ -72,6 +84,7 @@ export default function MesocyclePlanner() {
       mesocycleWeeks: preserve.mesocycleWeeks ? current.mesocycleWeeks : defaults.mesocycleWeeks,
       sessionsPerWeek: preserve.sessionsPerWeek ? current.sessionsPerWeek : defaults.sessionsPerWeek,
       autoDeload: true,
+      strengthProfile: current.strengthProfile,
     };
 
     if (focus === 'mixed') {
@@ -85,10 +98,12 @@ export default function MesocyclePlanner() {
 
   function handleFocusChange(value: Focus) {
     setInputs((current) => applyRecommended(current.level, value, overridden, current));
+    setSelectedDay(null);
   }
 
   function handleLevelChange(value: Level) {
     setInputs((current) => applyRecommended(value, current.focus, overridden, current));
+    setSelectedDay(null);
   }
 
   function handleReset() {
@@ -103,6 +118,7 @@ export default function MesocyclePlanner() {
         autoDeload: true,
       });
     });
+    setSelectedDay(null);
   }
 
   return (
@@ -124,6 +140,23 @@ export default function MesocyclePlanner() {
           ))}
         </select>
 
+        <label htmlFor="strength-profile-select">Strength profile</label>
+        <select
+          id="strength-profile-select"
+          aria-label="Strength profile"
+          value={inputs.strengthProfile}
+          onChange={(event) => {
+            setInputs((current) => normalizeInputs({ ...current, strengthProfile: event.target.value as StrengthProfile, autoDeload: true }));
+            setSelectedDay(null);
+          }}
+        >
+          {STRENGTH_PROFILE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
         {inputs.focus === 'mixed' && (
           <>
             <label htmlFor="mixed-bias">Mixed bias</label>
@@ -135,9 +168,10 @@ export default function MesocyclePlanner() {
               max={100}
               step={1}
               value={inputs.mixedBias ?? 50}
-              onChange={(event) =>
-                setInputs((current) => normalizeInputs({ ...current, mixedBias: Number(event.target.value), autoDeload: true }))
-              }
+              onChange={(event) => {
+                setInputs((current) => normalizeInputs({ ...current, mixedBias: Number(event.target.value), autoDeload: true }));
+                setSelectedDay(null);
+              }}
             />
             <output htmlFor="mixed-bias">{inputs.mixedBias ?? 50}% endurance</output>
           </>
@@ -154,6 +188,7 @@ export default function MesocyclePlanner() {
           onChange={(event) => {
             setOverridden((current) => ({ ...current, mesocycleWeeks: true }));
             setInputs((current) => normalizeInputs({ ...current, mesocycleWeeks: Number(event.target.value), autoDeload: true }));
+            setSelectedDay(null);
           }}
         />
 
@@ -182,6 +217,7 @@ export default function MesocyclePlanner() {
           onChange={(event) => {
             setOverridden((current) => ({ ...current, sessionsPerWeek: true }));
             setInputs((current) => normalizeInputs({ ...current, sessionsPerWeek: Number(event.target.value), autoDeload: true }));
+            setSelectedDay(null);
           }}
         />
 
@@ -223,9 +259,11 @@ export default function MesocyclePlanner() {
             </header>
             <div className="day-grid">
               {week.days.map((day) => (
-                <div
+                <button
                   key={`${week.weekIndex}-${day.dayIndex}`}
+                  type="button"
                   className={`day-box type-${day.sessionType}`}
+                  onClick={() => setSelectedDay(day)}
                   aria-label={`Week ${week.weekIndex}, ${day.dateLabel}, ${sessionLabel(day.sessionType)}, effort ${day.effort} of 5, objective ${week.objective}`}
                 >
                   <strong>{day.dateLabel}</strong>
@@ -233,12 +271,41 @@ export default function MesocyclePlanner() {
                   <span className="effort" aria-hidden="true">
                     {'●'.repeat(day.effort)}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </article>
         ))}
       </section>
+
+      <aside className="day-details" aria-label="Day details">
+        <h2>Session details</h2>
+        {!selectedDay?.workout && <p>Select a training day to inspect the workout.</p>}
+        {selectedDay?.workout && (
+          <div className="session-content">
+            <p>
+              Week {selectedDay.weekIndex} {selectedDay.dateLabel}
+            </p>
+            <p>{sessionLabel(selectedDay.sessionType)}</p>
+            {selectedDay.workout.strengthProfile && (
+              <p>Profile: {STRENGTH_PROFILE_LABELS[selectedDay.workout.strengthProfile]}</p>
+            )}
+            {selectedDay.workout.targetMode && <p>Target: {selectedDay.workout.targetMode.toUpperCase()} ({selectedDay.workout.targetValue})</p>}
+            {selectedDay.workout.blocks.map((block) => (
+              <section key={block.title}>
+                <h3>{block.title}</h3>
+                <ul>
+                  {block.items.map((item) => (
+                    <li key={`${block.title}-${item.name}`}>
+                      {item.name}: {item.prescription}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
+      </aside>
     </div>
   );
 }

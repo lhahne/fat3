@@ -42,9 +42,11 @@ describe('MesocyclePlanner', () => {
     render(<MesocyclePlanner />);
 
     fireEvent.change(screen.getByLabelText('Strength profile'), { target: { value: 'endurance-support' } });
+    expect(screen.getAllByText('Lower + Push Build').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /Week 1, Mon, Strength/i }));
 
     expect(screen.getByRole('heading', { name: 'Session details' })).toBeInTheDocument();
+    expect(screen.getAllByText('Lower + Push Build').length).toBeGreaterThan(0);
     expect(screen.getByText('Profile: Endurance Support Strength')).toBeInTheDocument();
     expect(screen.getAllByText(/RIR/).length).toBeGreaterThan(0);
   });

@@ -267,7 +267,7 @@ export default function MesocyclePlanner() {
                   aria-label={`Week ${week.weekIndex}, ${day.dateLabel}, ${sessionLabel(day.sessionType)}, effort ${day.effort} of 5, objective ${week.objective}`}
                 >
                   <strong>{day.dateLabel}</strong>
-                  <span>{sessionLabel(day.sessionType)}</span>
+                  <span>{day.workout?.title ?? sessionLabel(day.sessionType)}</span>
                   <span className="effort" aria-hidden="true">
                     {'●'.repeat(day.effort)}
                   </span>
@@ -286,6 +286,7 @@ export default function MesocyclePlanner() {
             <p>
               Week {selectedDay.weekIndex} {selectedDay.dateLabel}
             </p>
+            <p>{selectedDay.workout.title}</p>
             <p>{sessionLabel(selectedDay.sessionType)}</p>
             {selectedDay.workout.strengthProfile && (
               <p>Profile: {STRENGTH_PROFILE_LABELS[selectedDay.workout.strengthProfile]}</p>

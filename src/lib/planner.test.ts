@@ -100,6 +100,7 @@ describe('generateProgram', () => {
 
     const weekOneStrengthDay = program.weeks[0].days.find((day) => day.sessionType === 'strength');
     expect(weekOneStrengthDay?.workout?.strengthProfile).toBe('endurance-support');
+    expect(weekOneStrengthDay?.workout?.title).toContain('Build');
 
     const mainItem = weekOneStrengthDay?.workout?.blocks[1].items[0];
     expect(mainItem?.prescription).toContain('RIR');
@@ -119,10 +120,12 @@ describe('generateProgram', () => {
     const buildWeek = program.weeks[0];
     const easyDay = buildWeek.days.find((day) => day.workout?.targetMode === 'zone');
     expect(easyDay?.workout?.targetMode).toBe('zone');
+    expect(easyDay?.workout?.title).toBe('Aerobic Base');
 
     const pushWeek = program.weeks[2];
     const hardDay = pushWeek.days.find((day) => day.workout?.type === 'interval');
     expect(hardDay?.workout?.targetMode).toBe('rpe');
+    expect(hardDay?.workout?.title).toBe('Interval Power');
   });
 
   it('applies cardio collision adjustment to lower strength work in mixed plans', () => {

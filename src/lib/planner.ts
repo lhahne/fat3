@@ -37,6 +37,7 @@ export type WorkoutBlock = {
 export type WorkoutSession = {
   kind: 'strength' | 'endurance';
   type: string;
+  title: string;
   objective: WeekObjective;
   dayType?: 'A' | 'B' | 'C' | 'A2' | 'B2' | 'C2';
   strengthProfile?: StrengthProfile;
@@ -346,6 +347,23 @@ function getEnduranceWorkoutType(objective: WeekObjective, order: number, total:
   return order % 2 === 0 ? 'tempo' : 'easy';
 }
 
+function strengthSessionTitle(dayType: 'A' | 'B' | 'C' | 'A2' | 'B2' | 'C2', objective: WeekObjective): string {
+  const base = dayType.startsWith('A') ? 'Lower + Push' : dayType.startsWith('B') ? 'Hinge + Press' : 'Mixed Strength';
+  if (objective === 'push') return `${base} Peak`;
+  if (objective === 'deload') return `${base} Deload`;
+  if (objective === 'taper') return `${base} Taper`;
+  return `${base} Build`;
+}
+
+function enduranceSessionTitle(type: EnduranceWorkoutType, objective: WeekObjective): string {
+  if (objective === 'deload') return 'Recovery Aerobic';
+  if (objective === 'taper') return 'Taper Endurance';
+  if (type === 'interval') return 'Interval Power';
+  if (type === 'tempo') return 'Tempo Control';
+  if (type === 'long-easy') return 'Long Easy Endurance';
+  return 'Aerobic Base';
+}
+
 function targetModeForEndurance(type: EnduranceWorkoutType): EnduranceTargetMode {
   if (type === 'easy' || type === 'long-easy') {
     return 'zone';
@@ -384,6 +402,7 @@ function generateEnduranceWorkout(
   return {
     kind: 'endurance',
     type,
+    title: enduranceSessionTitle(type, objective),
     objective,
     targetMode,
     targetValue,
@@ -463,6 +482,7 @@ function generateStrengthWorkout(
   return {
     kind: 'strength',
     type: 'strength-session',
+    title: strengthSessionTitle(dayType, objective),
     objective,
     dayType,
     strengthProfile: profile,

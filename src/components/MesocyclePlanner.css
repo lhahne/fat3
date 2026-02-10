@@ -87,6 +87,12 @@
   font-size: 0.85rem;
 }
 
+.export-controls {
+  margin-top: 0.6rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
 .calendar {
   display: grid;
   gap: 0.9rem;

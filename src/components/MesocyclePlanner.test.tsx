@@ -1,7 +1,23 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MesocyclePlanner from './MesocyclePlanner';
 
+const { excelMock, pdfMock } = vi.hoisted(() => ({
+  excelMock: vi.fn(async () => undefined),
+  pdfMock: vi.fn(async () => undefined),
+}));
+
+vi.mock('../lib/exports/service', () => ({
+  exportProgramAsExcel: excelMock,
+  exportProgramAsPdf: pdfMock,
+}));
+
 describe('MesocyclePlanner', () => {
+  beforeEach(() => {
+    excelMock.mockClear();
+    pdfMock.mockClear();
+  });
+
   it('renders controls and calendar weeks with seven days', () => {
     render(<MesocyclePlanner />);
 
@@ -49,5 +65,21 @@ describe('MesocyclePlanner', () => {
     expect(screen.getAllByText('Lower + Push Build').length).toBeGreaterThan(0);
     expect(screen.getByText('Profile: Endurance Support Strength')).toBeInTheDocument();
     expect(screen.getAllByText(/RIR/).length).toBeGreaterThan(0);
+  });
+
+  it('triggers excel and pdf exports with UI controls', async () => {
+    render(<MesocyclePlanner />);
+
+    fireEvent.change(screen.getByLabelText('Export scope'), { target: { value: 'selected' } });
+    fireEvent.change(screen.getByLabelText('Selected weeks'), { target: { value: '1,2' } });
+    fireEvent.change(screen.getByLabelText('Export detail'), { target: { value: 'calendar-only' } });
+    fireEvent.change(screen.getByLabelText('PDF mode'), { target: { value: 'compact' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export Excel (.xlsx)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+
+    await waitFor(() => expect(excelMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(pdfMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('Exported PDF file.')).toBeInTheDocument());
   });
 });

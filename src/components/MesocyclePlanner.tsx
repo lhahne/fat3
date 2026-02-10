@@ -10,6 +10,8 @@ import {
   type PlannerInputs,
   type StrengthProfile,
 } from '../lib/planner';
+import { exportProgramAsExcel, exportProgramAsPdf } from '../lib/exports/service';
+import type { ExportDetail, ExportOptions, ExportScope, PdfMode } from '../lib/exports/types';
 import './MesocyclePlanner.css';
 
 type OverriddenFields = {
@@ -67,6 +69,11 @@ function sessionLabel(type: string): string {
 export default function MesocyclePlanner() {
   const [inputs, setInputs] = useState<PlannerInputs>(createInitialInputs);
   const [selectedDay, setSelectedDay] = useState<DayPlan | null>(null);
+  const [exportScope, setExportScope] = useState<ExportScope>('all');
+  const [selectedWeeksText, setSelectedWeeksText] = useState('');
+  const [exportDetail, setExportDetail] = useState<ExportDetail>('full');
+  const [pdfMode, setPdfMode] = useState<PdfMode>('detailed');
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [overridden, setOverridden] = useState<OverriddenFields>({
     mesocycleWeeks: false,
     sessionsPerWeek: false,
@@ -119,6 +126,38 @@ export default function MesocyclePlanner() {
       });
     });
     setSelectedDay(null);
+  }
+
+  function parseSelectedWeeks(value: string): number[] {
+    const weeks = value
+      .split(',')
+      .map((chunk) => Number(chunk.trim()))
+      .filter((week) => Number.isInteger(week) && week >= 1 && week <= program.weeks.length);
+    return Array.from(new Set(weeks)).sort((a, b) => a - b);
+  }
+
+  function buildExportOptions(): ExportOptions {
+    return {
+      scope: exportScope,
+      selectedWeeks: exportScope === 'selected' ? parseSelectedWeeks(selectedWeeksText) : undefined,
+      detail: exportDetail,
+      pdfMode,
+      paperSize: 'letter',
+      orientation: 'auto',
+      grayscale: false,
+      includeLegend: true,
+      includeProgressionChart: true,
+    };
+  }
+
+  async function handleExcelExport() {
+    await exportProgramAsExcel(program, buildExportOptions());
+    setExportStatus('Exported Excel file.');
+  }
+
+  async function handlePdfExport() {
+    await exportProgramAsPdf(program, buildExportOptions());
+    setExportStatus('Exported PDF file.');
   }
 
   return (
@@ -236,6 +275,63 @@ export default function MesocyclePlanner() {
             <dd>{recommended.sessionsPerWeek} / week</dd>
           </div>
         </dl>
+
+        <div className="export-controls">
+          <label htmlFor="export-scope">Export scope</label>
+          <select
+            id="export-scope"
+            aria-label="Export scope"
+            value={exportScope}
+            onChange={(event) => setExportScope(event.target.value as ExportScope)}
+          >
+            <option value="all">All weeks</option>
+            <option value="selected">Selected weeks</option>
+          </select>
+
+          {exportScope === 'selected' && (
+            <>
+              <label htmlFor="selected-weeks">Selected weeks</label>
+              <input
+                id="selected-weeks"
+                aria-label="Selected weeks"
+                type="text"
+                placeholder="e.g. 1,2,5"
+                value={selectedWeeksText}
+                onChange={(event) => setSelectedWeeksText(event.target.value)}
+              />
+            </>
+          )}
+
+          <label htmlFor="export-detail">Export detail</label>
+          <select
+            id="export-detail"
+            aria-label="Export detail"
+            value={exportDetail}
+            onChange={(event) => setExportDetail(event.target.value as ExportDetail)}
+          >
+            <option value="calendar-only">Calendar only</option>
+            <option value="full">Calendar + workout details</option>
+          </select>
+
+          <label htmlFor="pdf-mode">PDF mode</label>
+          <select
+            id="pdf-mode"
+            aria-label="PDF mode"
+            value={pdfMode}
+            onChange={(event) => setPdfMode(event.target.value as PdfMode)}
+          >
+            <option value="compact">Compact</option>
+            <option value="detailed">Detailed</option>
+          </select>
+
+          <button type="button" onClick={handleExcelExport}>
+            Export Excel (.xlsx)
+          </button>
+          <button type="button" onClick={handlePdfExport}>
+            Export PDF
+          </button>
+          {exportStatus && <p>{exportStatus}</p>}
+        </div>
       </section>
 
       <section className="calendar" aria-label="Program calendar">

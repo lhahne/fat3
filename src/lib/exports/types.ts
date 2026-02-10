@@ -57,11 +57,21 @@ export type ExportModel = {
   progressionRows: ProgressionRow[];
 };
 
-export type PdfRenderPage = {
-  title: string;
-  subtitle?: string;
-  lines: string[];
-};
+export type PdfRenderPage =
+  | {
+      kind: 'cover';
+      title: string;
+      subtitle?: string;
+      lines: string[];
+    }
+  | {
+      kind: 'week';
+      title: string;
+      subtitle?: string;
+      weekIndex: number;
+      objective: string;
+      days: ProgramOutput['weeks'][number]['days'];
+    };
 
 export type PdfRenderModel = {
   pages: PdfRenderPage[];

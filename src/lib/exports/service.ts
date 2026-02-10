@@ -42,6 +42,12 @@ export async function exportProgramAsPdf(program: ProgramOutput, options: Export
     grayscale: options.grayscale,
     includeLegend: options.includeLegend,
   });
-  const bytes = await buildPdfBytes(renderModel);
+  const bytes = await buildPdfBytes(renderModel, {
+    mode: options.pdfMode,
+    paperSize: options.paperSize,
+    orientation: options.orientation,
+    grayscale: options.grayscale,
+    includeLegend: options.includeLegend,
+  });
   downloadBinary(bytes, `${baseName(program)}.pdf`, 'application/pdf');
 }

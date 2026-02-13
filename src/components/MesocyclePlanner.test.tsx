@@ -67,12 +67,19 @@ describe('MesocyclePlanner', () => {
     expect(screen.getAllByText(/RIR/).length).toBeGreaterThan(0);
   });
 
-  it('triggers excel and pdf exports with UI controls', async () => {
+  it('opens PDF settings in a modal and exports from there', async () => {
     render(<MesocyclePlanner />);
 
     fireEvent.change(screen.getByLabelText('Export scope'), { target: { value: 'selected' } });
     fireEvent.change(screen.getByLabelText('Selected weeks'), { target: { value: '1,2' } });
     fireEvent.change(screen.getByLabelText('Export detail'), { target: { value: 'calendar-only' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export Excel (.xlsx)' }));
+    expect(screen.queryByLabelText('PDF mode')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    expect(pdfMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'PDF export settings' })).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText('PDF mode'), { target: { value: 'compact' } });
     fireEvent.change(screen.getByLabelText('Paper size'), { target: { value: 'a4' } });
     fireEvent.change(screen.getByLabelText('Orientation'), { target: { value: 'portrait' } });
@@ -80,13 +87,12 @@ describe('MesocyclePlanner', () => {
     fireEvent.click(screen.getByLabelText('Ink saver'));
     fireEvent.click(screen.getByLabelText('Include legend'));
     fireEvent.click(screen.getByLabelText('Include progression chart'));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Export Excel (.xlsx)' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate PDF' }));
 
     await waitFor(() => expect(excelMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(pdfMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByText('Exported PDF file.')).toBeInTheDocument());
+    expect(screen.queryByRole('dialog', { name: 'PDF export settings' })).not.toBeInTheDocument();
     expect(pdfMock.mock.calls[0]?.[1]).toEqual({
       scope: 'selected',
       selectedWeeks: [1, 2],
@@ -99,5 +105,22 @@ describe('MesocyclePlanner', () => {
       includeLegend: false,
       includeProgressionChart: true,
     });
+  });
+
+  it('closes PDF modal on cancel and escape', () => {
+    render(<MesocyclePlanner />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    expect(screen.getByRole('dialog', { name: 'PDF export settings' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'PDF export settings' })).not.toBeInTheDocument();
+    expect(pdfMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    expect(screen.getByRole('dialog', { name: 'PDF export settings' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'PDF export settings' })).not.toBeInTheDocument();
+    expect(pdfMock).not.toHaveBeenCalled();
   });
 });

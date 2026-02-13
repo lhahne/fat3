@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   STRENGTH_PROFILE_LABELS,
   generateProgram,
@@ -73,13 +73,17 @@ export default function MesocyclePlanner() {
   const [selectedWeeksText, setSelectedWeeksText] = useState('');
   const [exportDetail, setExportDetail] = useState<ExportDetail>('full');
   const [pdfMode, setPdfMode] = useState<PdfMode>('detailed');
-  const [paperSize, setPaperSize] = useState<PaperSize>('letter');
+  const [paperSize, setPaperSize] = useState<PaperSize>('a4');
   const [orientation, setOrientation] = useState<Orientation>('auto');
   const [grayscale, setGrayscale] = useState(false);
   const [inkSaver, setInkSaver] = useState(true);
   const [includeLegend, setIncludeLegend] = useState(true);
   const [includeProgressionChart, setIncludeProgressionChart] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const exportPdfButtonRef = useRef<HTMLButtonElement | null>(null);
+  const modalHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [overridden, setOverridden] = useState<OverriddenFields>({
     mesocycleWeeks: false,
     sessionsPerWeek: false,
@@ -163,8 +167,45 @@ export default function MesocyclePlanner() {
   }
 
   async function handlePdfExport() {
-    await exportProgramAsPdf(program, buildExportOptions());
-    setExportStatus('Exported PDF file.');
+    setIsPdfExporting(true);
+    try {
+      await exportProgramAsPdf(program, buildExportOptions());
+      setExportStatus('Exported PDF file.');
+      setIsPdfModalOpen(false);
+    } finally {
+      setIsPdfExporting(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!isPdfModalOpen) return;
+
+    modalHeadingRef.current?.focus();
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape' || isPdfExporting) return;
+      setIsPdfModalOpen(false);
+    }
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isPdfModalOpen, isPdfExporting]);
+
+  useEffect(() => {
+    if (isPdfModalOpen) return;
+    exportPdfButtonRef.current?.focus();
+  }, [isPdfModalOpen]);
+
+  function handleOpenPdfModal() {
+    setExportStatus(null);
+    setIsPdfModalOpen(true);
+  }
+
+  function handleClosePdfModal() {
+    if (isPdfExporting) return;
+    setIsPdfModalOpen(false);
   }
 
   return (
@@ -320,88 +361,10 @@ export default function MesocyclePlanner() {
             <option value="full">Calendar + workout details</option>
           </select>
 
-          <label htmlFor="pdf-mode">PDF mode</label>
-          <select
-            id="pdf-mode"
-            aria-label="PDF mode"
-            value={pdfMode}
-            onChange={(event) => setPdfMode(event.target.value as PdfMode)}
-          >
-            <option value="compact">Compact</option>
-            <option value="detailed">Detailed</option>
-          </select>
-
-          <label htmlFor="paper-size">Paper size</label>
-          <select
-            id="paper-size"
-            aria-label="Paper size"
-            value={paperSize}
-            onChange={(event) => setPaperSize(event.target.value as PaperSize)}
-          >
-            <option value="letter">Letter</option>
-            <option value="a4">A4</option>
-          </select>
-
-          <label htmlFor="orientation">Orientation</label>
-          <select
-            id="orientation"
-            aria-label="Orientation"
-            value={orientation}
-            onChange={(event) => setOrientation(event.target.value as Orientation)}
-          >
-            <option value="auto">Auto</option>
-            <option value="portrait">Portrait</option>
-            <option value="landscape">Landscape</option>
-          </select>
-
-          <label htmlFor="grayscale-toggle">
-            <input
-              id="grayscale-toggle"
-              aria-label="Grayscale"
-              type="checkbox"
-              checked={grayscale}
-              onChange={(event) => setGrayscale(event.target.checked)}
-            />
-            Grayscale
-          </label>
-
-          <label htmlFor="ink-saver-toggle">
-            <input
-              id="ink-saver-toggle"
-              aria-label="Ink saver"
-              type="checkbox"
-              checked={inkSaver}
-              onChange={(event) => setInkSaver(event.target.checked)}
-            />
-            Ink saver
-          </label>
-
-          <label htmlFor="legend-toggle">
-            <input
-              id="legend-toggle"
-              aria-label="Include legend"
-              type="checkbox"
-              checked={includeLegend}
-              onChange={(event) => setIncludeLegend(event.target.checked)}
-            />
-            Include legend
-          </label>
-
-          <label htmlFor="progression-toggle">
-            <input
-              id="progression-toggle"
-              aria-label="Include progression chart"
-              type="checkbox"
-              checked={includeProgressionChart}
-              onChange={(event) => setIncludeProgressionChart(event.target.checked)}
-            />
-            Include progression chart
-          </label>
-
           <button type="button" onClick={handleExcelExport}>
             Export Excel (.xlsx)
           </button>
-          <button type="button" onClick={handlePdfExport}>
+          <button type="button" onClick={handleOpenPdfModal} ref={exportPdfButtonRef}>
             Export PDF
           </button>
           {exportStatus && <p>{exportStatus}</p>}
@@ -477,6 +440,109 @@ export default function MesocyclePlanner() {
           </div>
         )}
       </aside>
+
+      {isPdfModalOpen && (
+        <div className="modal-backdrop" onClick={handleClosePdfModal}>
+          <div
+            className="modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pdf-export-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="pdf-export-modal-title" tabIndex={-1} ref={modalHeadingRef}>
+              PDF export settings
+            </h2>
+
+            <label htmlFor="pdf-mode">PDF mode</label>
+            <select
+              id="pdf-mode"
+              aria-label="PDF mode"
+              value={pdfMode}
+              onChange={(event) => setPdfMode(event.target.value as PdfMode)}
+            >
+              <option value="compact">Compact</option>
+              <option value="detailed">Detailed</option>
+            </select>
+
+            <label htmlFor="paper-size">Paper size</label>
+            <select
+              id="paper-size"
+              aria-label="Paper size"
+              value={paperSize}
+              onChange={(event) => setPaperSize(event.target.value as PaperSize)}
+            >
+              <option value="letter">Letter</option>
+              <option value="a4">A4</option>
+            </select>
+
+            <label htmlFor="orientation">Orientation</label>
+            <select
+              id="orientation"
+              aria-label="Orientation"
+              value={orientation}
+              onChange={(event) => setOrientation(event.target.value as Orientation)}
+            >
+              <option value="auto">Auto</option>
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
+
+            <label htmlFor="grayscale-toggle">
+              <input
+                id="grayscale-toggle"
+                aria-label="Grayscale"
+                type="checkbox"
+                checked={grayscale}
+                onChange={(event) => setGrayscale(event.target.checked)}
+              />
+              Grayscale
+            </label>
+
+            <label htmlFor="ink-saver-toggle">
+              <input
+                id="ink-saver-toggle"
+                aria-label="Ink saver"
+                type="checkbox"
+                checked={inkSaver}
+                onChange={(event) => setInkSaver(event.target.checked)}
+              />
+              Ink saver
+            </label>
+
+            <label htmlFor="legend-toggle">
+              <input
+                id="legend-toggle"
+                aria-label="Include legend"
+                type="checkbox"
+                checked={includeLegend}
+                onChange={(event) => setIncludeLegend(event.target.checked)}
+              />
+              Include legend
+            </label>
+
+            <label htmlFor="progression-toggle">
+              <input
+                id="progression-toggle"
+                aria-label="Include progression chart"
+                type="checkbox"
+                checked={includeProgressionChart}
+                onChange={(event) => setIncludeProgressionChart(event.target.checked)}
+              />
+              Include progression chart
+            </label>
+
+            <div className="modal-actions">
+              <button type="button" onClick={handleClosePdfModal} disabled={isPdfExporting}>
+                Cancel
+              </button>
+              <button type="button" onClick={handlePdfExport} disabled={isPdfExporting}>
+                Generate PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

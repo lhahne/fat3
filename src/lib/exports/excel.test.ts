@@ -30,8 +30,8 @@ describe('buildExcelWorkbook', () => {
     const bytes = buildExcelWorkbook(model);
     const wb = XLSX.read(bytes, { type: 'array' });
 
-    expect(wb.SheetNames).toEqual(['Overview', 'Calendar', 'Workouts', 'Progression']);
-    const calendar = XLSX.utils.sheet_to_json<string[]>(wb.Sheets.Calendar, { header: 1 });
-    expect(calendar[0]).toEqual(['Week', 'Objective', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+    expect(wb.SheetNames).toEqual(['Sessions Tracker']);
+    const sheet = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['Sessions Tracker'], { header: 1 });
+    expect(sheet[0]).toEqual(['Exercise', 'Prescription', 'Actual Reps', 'Weight', 'Notes']);
   });
 });

@@ -33,10 +33,12 @@ describe('mapProgramToExportModel', () => {
     );
 
     expect(model.overview.some((row) => row.key === 'Program Focus' && row.value === 'mixed')).toBe(true);
-    expect(model.calendarRows).toHaveLength(2);
-    expect(model.progressionRows).toHaveLength(2);
-    expect(model.workoutRows.length).toBeGreaterThan(0);
-    expect(model.workoutRows[0]).toHaveProperty('Session Title');
+    expect(model.sessionRows.length).toBeGreaterThan(0);
+    expect(model.sessionRows[0]).toHaveProperty('Exercise');
+    expect(model.sessionRows[0]).toHaveProperty('Prescription');
+    expect(model.sessionRows[0]).toHaveProperty('Actual Reps');
+    expect(model.sessionRows[0]).toHaveProperty('Weight');
+    expect(model.sessionRows[0]).toHaveProperty('Notes');
     expect(model.overview.some((row) => row.key === 'Generated At' && row.value === nowIso)).toBe(true);
     expect(model.overview.some((row) => row.key === 'Exported At' && row.value === nowIso)).toBe(true);
   });

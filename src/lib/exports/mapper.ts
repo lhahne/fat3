@@ -1,5 +1,5 @@
 import type { DayPlan, ProgramOutput } from '../planner';
-import type { CalendarRow, ExportModel, ExportOptions, ProgressionRow, WorkoutRow } from './types';
+import type { CalendarRow, ExportModel, ExportOptions, ProgressionRow, SessionRow, WorkoutRow } from './types';
 
 const WEEKDAY_KEYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 
@@ -89,6 +89,35 @@ function mapWorkoutRows(weeks: ProgramOutput['weeks']): WorkoutRow[] {
   return rows;
 }
 
+function mapSessionRows(weeks: ProgramOutput['weeks']): SessionRow[] {
+  const rows: SessionRow[] = [];
+
+  for (const week of weeks) {
+    for (const day of week.days) {
+      if (!day.workout) continue;
+
+      for (const block of day.workout.blocks) {
+        for (const item of block.items) {
+          rows.push({
+            Week: week.weekIndex,
+            'Week Objective': week.objective,
+            Effort: day.effort,
+            'Day Label': day.dateLabel,
+            'Session Type': day.workout.title,
+            Exercise: item.name,
+            Prescription: item.prescription,
+            'Actual Reps': '',
+            Weight: '',
+            Notes: '',
+          });
+        }
+      }
+    }
+  }
+
+  return rows;
+}
+
 function mapProgressionRows(weeks: ProgramOutput['weeks']): ProgressionRow[] {
   return weeks.map((week) => {
     const hardEnduranceSessions = week.days.filter(
@@ -146,6 +175,7 @@ export function mapProgramToExportModel(program: ProgramOutput, options: ExportO
     { key: 'Average Weekly Effort', value: averageEffort },
   ];
 
+  const sessionRows = mapSessionRows(filteredWeeks);
   const calendarRows = mapCalendarRows(filteredWeeks);
   const workoutRows = options.detail === 'calendar-only' ? [] : mapWorkoutRows(filteredWeeks);
   const progressionRows = mapProgressionRows(filteredWeeks);
@@ -155,6 +185,7 @@ export function mapProgramToExportModel(program: ProgramOutput, options: ExportO
     options,
     filteredWeeks,
     overview,
+    sessionRows,
     calendarRows,
     workoutRows,
     progressionRows,

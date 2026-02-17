@@ -35,6 +35,19 @@ export type CalendarRow = {
 
 export type WorkoutRow = Record<string, string | number>;
 
+export type SessionRow = {
+  Week: number;
+  'Week Objective': string;
+  Effort: number;
+  'Day Label': string;
+  'Session Type': string;
+  Exercise: string;
+  Prescription: string;
+  'Actual Reps': string;
+  Weight: string;
+  Notes: string;
+};
+
 export type ProgressionRow = {
   Week: number;
   Objective: string;
@@ -53,6 +66,7 @@ export type ExportModel = {
   options: ExportOptions;
   filteredWeeks: ProgramOutput['weeks'];
   overview: OverviewRow[];
+  sessionRows: SessionRow[];
   calendarRows: CalendarRow[];
   workoutRows: WorkoutRow[];
   progressionRows: ProgressionRow[];

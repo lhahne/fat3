@@ -1,6 +1,6 @@
-# Astro + React on Cloudflare Pages
+# Mesocycle Planner (Astro + React + Cloudflare)
 
-Simple Astro app with a React counter component, configured for Cloudflare Pages and using `pnpm`.
+This repository contains a mesocycle training planner built with Astro and React. The app generates week-by-week training plans and supports Excel/PDF export.
 
 ## Requirements
 
@@ -16,22 +16,22 @@ pnpm dev
 
 Open `http://localhost:4321`.
 
-## Testing (TDD workflow)
+## Scripts
 
 ```bash
 pnpm test
-```
-
-Tests include:
-- React component behavior test (`src/components/CounterCard.test.tsx`)
-- Integration build output test (`tests/index.integration.test.ts`)
-
-## Production build
-
-```bash
+pnpm typecheck
 pnpm build
 pnpm preview
 ```
+
+## Tests
+
+Key tests include:
+- Planner generation logic: `src/lib/planner.test.ts`
+- Planner UI behavior: `src/components/MesocyclePlanner.test.tsx`
+- Export mapper/service/formatters: `src/lib/exports/*.test.ts`
+- Homepage wiring smoke test: `tests/index.integration.test.ts`
 
 ## Cloudflare Pages deployment
 
@@ -42,11 +42,11 @@ Use these settings in Cloudflare Pages:
 - Build output directory: `dist`
 - Root directory: `/` (repo root)
 
-The project includes `@astrojs/cloudflare` and `wrangler.jsonc` for Cloudflare runtime compatibility.
+The project uses `@astrojs/cloudflare` and includes `wrangler.jsonc` for Cloudflare runtime compatibility.
 
 ## Repository policy
 
 - Use `pnpm` only.
 - Do not use `npm`.
 - Do not commit `package-lock.json`.
-- See `AGENTS.md` for contributor instructions.
+- Follow the contributor instructions in `AGENTS.md`.

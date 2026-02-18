@@ -12,8 +12,8 @@ This repo exports exercise programs as **generated PDFs** (not “print the HTML
   - `buildPdfBytes()` draws:
     - A full-page background fill + top header band.
     - A weekly grid (7 columns, 1 row) with small text and (optional) color-coded cell backgrounds.
-- Options exist in types (`paperSize`, `orientation`, `grayscale`, `includeLegend`, `pdfMode`) but the UI currently hardcodes most of them in `src/components/MesocyclePlanner.tsx`.
-- Notably, `ExportOptions.detail` (`calendar-only` vs `full`) and `includeProgressionChart` are **not reflected** in the PDF output today.
+- Export options are exposed in the UI modal in `src/components/MesocyclePlanner.tsx` and passed through `ExportOptions`.
+- `ExportOptions.detail` and `includeProgressionChart` are reflected in the PDF render model (`sessionDetail` pages and optional `progressionSummary` page).
 
 ## Goals
 
@@ -184,8 +184,8 @@ The PDF should be generated from a render model that supports **pagination** and
 2. **Refactor PDF drawing**:
    - Split drawing into template-specific functions.
    - Add a lightweight layout step that computes coordinates and handles pagination for session details.
-3. **Make time injectable**:
-   - Pass `nowIso` from UI → exporter → mapper/render model.
+3. **Keep time injectable**:
+   - Preserve `nowIso` injection from exporter → mapper/render model for deterministic tests.
 4. **Wire up missing options**:
    - Expose paper size, grayscale/theme, legend, progression chart toggles in UI.
 5. **Add session detail pages** for `ExportOptions.detail === 'full'` in detailed mode.
@@ -201,4 +201,3 @@ The PDF should be generated from a render model that supports **pagination** and
 - Detailed mode includes per-session detail pages with checkboxes and notes space.
 - PDF output is deterministic under a frozen `nowIso`.
 - Export options in the UI map 1:1 to PDF output behavior.
-

@@ -93,7 +93,7 @@ describe('MesocyclePlanner', () => {
     await waitFor(() => expect(pdfMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByText('Exported PDF file.')).toBeInTheDocument());
     expect(screen.queryByRole('dialog', { name: 'PDF export settings' })).not.toBeInTheDocument();
-    expect(pdfMock.mock.calls[0]?.[1]).toEqual({
+    expect(pdfMock).toHaveBeenCalledWith(expect.anything(), {
       scope: 'selected',
       selectedWeeks: [1, 2],
       detail: 'calendar-only',
@@ -105,6 +105,21 @@ describe('MesocyclePlanner', () => {
       includeLegend: false,
       includeProgressionChart: true,
     });
+  });
+
+  it('blocks exports when selected-week input has no valid weeks', () => {
+    render(<MesocyclePlanner />);
+
+    fireEvent.change(screen.getByLabelText('Export scope'), { target: { value: 'selected' } });
+    fireEvent.change(screen.getByLabelText('Selected weeks'), { target: { value: '0, abc, 99' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export Excel (.xlsx)' }));
+    expect(excelMock).not.toHaveBeenCalled();
+    expect(screen.getByText('Please enter at least one valid week number.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export PDF' }));
+    expect(screen.queryByRole('dialog', { name: 'PDF export settings' })).not.toBeInTheDocument();
+    expect(pdfMock).not.toHaveBeenCalled();
   });
 
   it('closes PDF modal on cancel and escape', () => {

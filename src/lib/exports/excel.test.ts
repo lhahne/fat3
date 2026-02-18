@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { generateProgram } from '../planner';
 import { buildExcelWorkbook } from './excel';
 import { mapProgramToExportModel } from './mapper';
 
 describe('buildExcelWorkbook', () => {
-  it('creates workbook with expected sheets and headers', () => {
+  it('creates workbook with expected sheets and headers', async () => {
     const program = generateProgram({
       focus: 'strength',
       mesocycleWeeks: 4,
@@ -27,11 +27,17 @@ describe('buildExcelWorkbook', () => {
       includeProgressionChart: true,
     });
 
-    const bytes = buildExcelWorkbook(model);
-    const wb = XLSX.read(bytes, { type: 'array' });
+    const bytes = await buildExcelWorkbook(model);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(bytes as Parameters<typeof workbook.xlsx.load>[0]);
 
-    expect(wb.SheetNames).toEqual(['Sessions Tracker']);
-    const sheet = XLSX.utils.sheet_to_json<string[]>(wb.Sheets['Sessions Tracker'], { header: 1 });
-    expect(sheet[0]).toEqual(['Exercise', 'Prescription', 'Actual Reps', 'Weight', 'Notes']);
+    expect(workbook.worksheets.map(ws => ws.name)).toEqual(['Sessions Tracker']);
+    const sheet = workbook.getWorksheet('Sessions Tracker');
+    const headerRow = sheet?.getRow(1);
+    expect(headerRow?.getCell(1).value).toBe('Exercise');
+    expect(headerRow?.getCell(2).value).toBe('Prescription');
+    expect(headerRow?.getCell(3).value).toBe('Actual Reps');
+    expect(headerRow?.getCell(4).value).toBe('Weight');
+    expect(headerRow?.getCell(5).value).toBe('Notes');
   });
 });

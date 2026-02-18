@@ -146,10 +146,26 @@ export default function MesocyclePlanner() {
     return Array.from(new Set(weeks)).sort((a, b) => a - b);
   }
 
-  function buildExportOptions(): ExportOptions {
+  function validateSelectedWeeksForExport(): boolean {
+    if (exportScope !== 'selected') return true;
+
+    const selectedWeeks = parseSelectedWeeks(selectedWeeksText);
+    if (selectedWeeks.length > 0) return true;
+
+    setExportStatus('Please enter at least one valid week number.');
+    return false;
+  }
+
+  function buildValidatedExportOptions(): ExportOptions | null {
+    if (!validateSelectedWeeksForExport()) {
+      return null;
+    }
+
+    const selectedWeeks = exportScope === 'selected' ? parseSelectedWeeks(selectedWeeksText) : undefined;
+
     return {
       scope: exportScope,
-      selectedWeeks: exportScope === 'selected' ? parseSelectedWeeks(selectedWeeksText) : undefined,
+      selectedWeeks,
       detail: exportDetail,
       pdfMode,
       paperSize,
@@ -162,14 +178,20 @@ export default function MesocyclePlanner() {
   }
 
   async function handleExcelExport() {
-    await exportProgramAsExcel(program, buildExportOptions());
+    const options = buildValidatedExportOptions();
+    if (!options) return;
+
+    await exportProgramAsExcel(program, options);
     setExportStatus('Exported Excel file.');
   }
 
   async function handlePdfExport() {
+    const options = buildValidatedExportOptions();
+    if (!options) return;
+
     setIsPdfExporting(true);
     try {
-      await exportProgramAsPdf(program, buildExportOptions());
+      await exportProgramAsPdf(program, options);
       setExportStatus('Exported PDF file.');
       setIsPdfModalOpen(false);
     } finally {
@@ -199,6 +221,8 @@ export default function MesocyclePlanner() {
   }, [isPdfModalOpen]);
 
   function handleOpenPdfModal() {
+    if (!validateSelectedWeeksForExport()) return;
+
     setExportStatus(null);
     setIsPdfModalOpen(true);
   }

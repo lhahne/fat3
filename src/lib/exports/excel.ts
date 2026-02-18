@@ -1,13 +1,8 @@
-import * as XLSX from 'xlsx';
-import type { ExportModel, SessionRow } from './types';
+import ExcelJS from 'exceljs';
+import type { ExportModel } from './types';
 
-interface SheetRow {
+interface SheetRowData {
   type: 'week-header' | 'day-header' | 'exercise' | 'empty';
-  Week?: number;
-  'Week Objective'?: string;
-  Effort?: number;
-  'Day Label'?: string;
-  'Session Type'?: string;
   Exercise?: string;
   Prescription?: string;
   'Actual Reps'?: string;
@@ -15,16 +10,22 @@ interface SheetRow {
   Notes?: string;
 }
 
-function buildSheetData(model: ExportModel): SheetRow[] {
-  const rows: SheetRow[] = [];
-  const weeks = model.filteredWeeks;
+const COLORS = {
+  weekHeader: 'E0E0E0',
+  dayHeader: 'F0F0F0',
+  rowEven: 'FFFFFF',
+  rowOdd: 'F8FBFF',
+  inputColumn: 'FFFDE7',
+  border: 'CCCCCC',
+};
 
-  for (const week of weeks) {
+function buildSheetData(model: ExportModel): SheetRowData[] {
+  const rows: SheetRowData[] = [];
+
+  for (const week of model.filteredWeeks) {
     rows.push({
       type: 'week-header',
-      Week: week.weekIndex,
-      'Week Objective': week.objective,
-      Effort: Math.round(week.summary.avgEffort),
+      Exercise: `Week ${week.weekIndex} - ${week.objective.charAt(0).toUpperCase() + week.objective.slice(1)} (Effort: ${Math.round(week.summary.avgEffort)}/5)`,
     });
 
     for (const day of week.days) {
@@ -32,8 +33,7 @@ function buildSheetData(model: ExportModel): SheetRow[] {
 
       rows.push({
         type: 'day-header',
-        'Day Label': day.dateLabel,
-        'Session Type': day.workout.title,
+        Exercise: `${day.dateLabel} - ${day.workout.title}`,
       });
 
       for (const block of day.workout.blocks) {
@@ -51,72 +51,112 @@ function buildSheetData(model: ExportModel): SheetRow[] {
     }
 
     rows.push({ type: 'empty' });
-    rows.push({ type: 'empty' });
   }
 
   return rows;
 }
 
-function rowToArray(row: SheetRow): (string | number)[] {
-  if (row.type === 'week-header') {
-    return [
-      `Week ${row.Week} - ${row['Week Objective']} (Effort: ${row.Effort}/5)`,
-      '', '', '', '', ''
-    ];
-  }
-  if (row.type === 'day-header') {
-    return [
-      `${row['Day Label']} - ${row['Session Type']}`,
-      '', '', '', '', ''
-    ];
-  }
-  return [
-    row.Exercise ?? '',
-    row.Prescription ?? '',
-    row['Actual Reps'] ?? '',
-    row.Weight ?? '',
-    row.Notes ?? ''
-  ];
-}
+export async function buildExcelWorkbook(model: ExportModel): Promise<ArrayBuffer> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'FAT3';
+  workbook.created = new Date();
 
-export function buildExcelWorkbook(model: ExportModel): ArrayBuffer {
-  const workbook = XLSX.utils.book_new();
+  const worksheet = workbook.addWorksheet('Sessions Tracker', {
+    pageSetup: { paperSize: 9, orientation: 'portrait', horizontalCentered: true },
+    properties: { tabColor: { argb: 'FF000000' } },
+  });
+
+  worksheet.columns = [
+    { header: 'Exercise', key: 'Exercise', width: 28 },
+    { header: 'Prescription', key: 'Prescription', width: 18 },
+    { header: 'Actual Reps', key: 'ActualReps', width: 12 },
+    { header: 'Weight', key: 'Weight', width: 12 },
+    { header: 'Notes', key: 'Notes', width: 25 },
+  ];
+
   const sheetData = buildSheetData(model);
+  let dataRowIndex = 0;
 
-  const headers = ['Exercise', 'Prescription', 'Actual Reps', 'Weight', 'Notes'];
-  const aoa: (string | number)[][] = [headers, ...sheetData.map(rowToArray)];
-
-  const sheet = XLSX.utils.aoa_to_sheet(aoa);
-
-  sheet['!cols'] = [
-    { wch: 28 },
-    { wch: 18 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 25 },
-  ];
-
-  const pageBreaks: XLSX.PageBreak[] = [];
-  let currentRow = 1;
+  const headerRow = worksheet.getRow(1);
+  headerRow.eachCell((cell) => {
+    cell.font = { bold: true };
+    cell.border = { bottom: { style: 'medium', color: { argb: 'FF000000' } } };
+    cell.alignment = { horizontal: 'center' };
+  });
+  headerRow.commit();
 
   for (let i = 0; i < sheetData.length; i++) {
-    const row = sheetData[i];
-    if (row.type === 'empty' && i < sheetData.length - 1) {
-      const nextRow = sheetData[i + 1];
-      if (nextRow && nextRow.type === 'week-header') {
-        pageBreaks.push({ i: currentRow, ch: 'Rows' });
-      }
+    const rowData = sheetData[i];
+    let row: ExcelJS.Row;
+
+    if (rowData.type === 'week-header') {
+      row = worksheet.addRow({ Exercise: rowData.Exercise, Prescription: '', ActualReps: '', Weight: '', Notes: '' });
+      row.height = 25;
+
+      worksheet.mergeCells(`A${row.number}:E${row.number}`);
+
+      row.eachCell((cell) => {
+        cell.font = { bold: true, size: 14 };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + COLORS.weekHeader } };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+        cell.alignment = { horizontal: 'left' };
+      });
+
+    } else if (rowData.type === 'day-header') {
+      row = worksheet.addRow({ Exercise: rowData.Exercise, Prescription: '', ActualReps: '', Weight: '', Notes: '' });
+
+      worksheet.mergeCells(`A${row.number}:E${row.number}`);
+
+      row.eachCell((cell) => {
+        cell.font = { bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + COLORS.dayHeader } };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+      });
+    } else if (rowData.type === 'exercise') {
+      const bgColor = dataRowIndex % 2 === 0 ? COLORS.rowEven : COLORS.rowOdd;
+
+      row = worksheet.addRow({
+        Exercise: rowData.Exercise ?? '',
+        Prescription: rowData.Prescription ?? '',
+        ActualReps: rowData['Actual Reps'] ?? '',
+        Weight: rowData.Weight ?? '',
+        Notes: rowData.Notes ?? '',
+      });
+
+      row.eachCell((cell, colNumber) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + bgColor } };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF' + COLORS.border } },
+          bottom: { style: 'thin', color: { argb: 'FF' + COLORS.border } },
+          left: { style: 'thin', color: { argb: 'FF' + COLORS.border } },
+          right: { style: 'thin', color: { argb: 'FF' + COLORS.border } },
+        };
+
+        if (colNumber === 3 || colNumber === 4) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + COLORS.inputColumn } };
+        }
+      });
+
+      dataRowIndex++;
+    } else {
+      worksheet.addRow({ Exercise: '', Prescription: '', ActualReps: '', Weight: '', Notes: '' });
     }
-    currentRow++;
   }
 
-  if (pageBreaks.length > 0) {
-    sheet['!pagebreaks'] = { horz: pageBreaks };
-  }
+  worksheet.eachRow((row) => {
+    row.height = 20;
+  });
 
-  sheet['!printArea'] = 'A1:E' + (sheetData.length + 1);
-
-  XLSX.utils.book_append_sheet(workbook, sheet, 'Sessions Tracker');
-
-  return XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer as ArrayBuffer;
 }

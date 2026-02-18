@@ -250,10 +250,6 @@ function chooseExercise(list: string[], weekIndex: number, variantOffset: number
   return list[index];
 }
 
-function slotIsMain(slot: string): boolean {
-  return slot === 'S1' || slot === 'S2' || slot === 'S3';
-}
-
 function slotIsLower(slot: string): boolean {
   return slot === 'S1' || slot === 'S4';
 }

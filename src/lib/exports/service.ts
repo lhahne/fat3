@@ -9,8 +9,18 @@ function baseName(program: ProgramOutput, nowIso: string): string {
   return `mesocycle-${program.inputs.focus}-${program.inputs.strengthProfile}-${timestampDate(nowIso)}`;
 }
 
-function downloadBinary(data: BlobPart, filename: string, mimeType: string): void {
-  const blob = new Blob([data], { type: mimeType });
+function toBlobPart(data: BlobPart | Uint8Array): BlobPart {
+  if (!(data instanceof Uint8Array)) {
+    return data;
+  }
+
+  const copy = new Uint8Array(data.byteLength);
+  copy.set(data);
+  return copy.buffer;
+}
+
+function downloadBinary(data: BlobPart | Uint8Array, filename: string, mimeType: string): void {
+  const blob = new Blob([toBlobPart(data)], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -26,7 +36,7 @@ export async function exportProgramAsExcel(program: ProgramOutput, options: Expo
     import('./excel'),
   ]);
   const model = mapProgramToExportModel(program, options, nowIso);
-  const bytes = buildExcelWorkbook(model);
+  const bytes = await buildExcelWorkbook(model);
   downloadBinary(bytes, `${baseName(program, nowIso)}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 

@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib';
-import type { ExportModel, PdfRenderModel, PdfRenderPage, ProgressionRow } from './types';
+import type { ExportModel, PdfRenderModel, PdfRenderPage } from './types';
 
 type PdfRenderOptions = {
   mode: 'compact' | 'detailed';

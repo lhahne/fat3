@@ -55,6 +55,7 @@ export type ProgressionRow = {
   'Planned Sessions': number;
   'Strength Sessions': number;
   'Endurance Sessions': number;
+  'Mixed Sessions': number;
   'Rest Days': number;
   'Avg Effort': number;
   'Hard Endurance Sessions': number;

@@ -24,7 +24,6 @@ describe('normalizeInputs', () => {
       mesocycleWeeks: 13,
       level: 'beginner',
       sessionsPerWeek: 1,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -41,7 +40,6 @@ describe('generateProgram', () => {
       mesocycleWeeks: 6,
       level: 'beginner',
       sessionsPerWeek: 3,
-      autoDeload: true,
       strengthProfile: 'balanced',
     };
 
@@ -61,7 +59,6 @@ describe('generateProgram', () => {
       mesocycleWeeks: 8,
       level: 'intermediate',
       sessionsPerWeek: 4,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -77,7 +74,6 @@ describe('generateProgram', () => {
       mesocycleWeeks: 4,
       level: 'beginner',
       sessionsPerWeek: 4,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -94,7 +90,6 @@ describe('generateProgram', () => {
       mesocycleWeeks: 4,
       level: 'intermediate',
       sessionsPerWeek: 3,
-      autoDeload: true,
       strengthProfile: 'endurance-support',
     });
 
@@ -113,7 +108,6 @@ describe('generateProgram', () => {
       mesocycleWeeks: 8,
       level: 'intermediate',
       sessionsPerWeek: 4,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -135,7 +129,6 @@ describe('generateProgram', () => {
       mesocycleWeeks: 8,
       level: 'intermediate',
       sessionsPerWeek: 4,
-      autoDeload: true,
       strengthProfile: 'endurance-support',
     });
 

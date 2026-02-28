@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   STRENGTH_PROFILE_LABELS,
   generateProgram,
@@ -12,6 +12,8 @@ import {
 } from '../lib/planner';
 import { exportProgramAsExcel, exportProgramAsPdf } from '../lib/exports/service';
 import type { ExportDetail, ExportOptions, ExportScope, Orientation, PaperSize, PdfMode } from '../lib/exports/types';
+import { useTheme, type ThemeMode } from './useTheme';
+import { PdfExportModal } from './PdfExportModal';
 import './MesocyclePlanner.css';
 
 type OverriddenFields = {
@@ -19,9 +21,6 @@ type OverriddenFields = {
   sessionsPerWeek: boolean;
 };
 
-type ThemeMode = 'system' | 'light' | 'dark';
-
-const THEME_STORAGE_KEY = 'theme-preference';
 const THEME_OPTIONS: Array<{ value: ThemeMode; label: string }> = [
   { value: 'system', label: 'Use system theme' },
   { value: 'light', label: 'Use light theme' },
@@ -47,22 +46,6 @@ const STRENGTH_PROFILE_OPTIONS: Array<{ value: StrengthProfile; label: string }>
   { value: 'endurance-support', label: 'Endurance Support Strength' },
 ];
 
-function resolveSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return 'light';
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function readStoredThemeMode(): ThemeMode {
-  if (typeof window === 'undefined') return 'system';
-
-  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY);
-  if (storedValue === 'light' || storedValue === 'dark') return storedValue;
-  return 'system';
-}
-
 function createInitialInputs(): PlannerInputs {
   const defaults = getRecommendedDefaults('beginner', 'strength');
   return normalizeInputs({
@@ -70,7 +53,6 @@ function createInitialInputs(): PlannerInputs {
     level: 'beginner',
     mesocycleWeeks: defaults.mesocycleWeeks,
     sessionsPerWeek: defaults.sessionsPerWeek,
-    autoDeload: true,
     strengthProfile: 'balanced',
   });
 }
@@ -124,7 +106,7 @@ function ThemeIcon({ mode }: { mode: ThemeMode }) {
 
 export default function MesocyclePlanner() {
   const [inputs, setInputs] = useState<PlannerInputs>(createInitialInputs);
-  const [themeMode, setThemeMode] = useState<ThemeMode>(readStoredThemeMode);
+  const [themeMode, setThemeMode] = useTheme();
   const [selectedDay, setSelectedDay] = useState<DayPlan | null>(null);
   const [exportScope, setExportScope] = useState<ExportScope>('all');
   const [selectedWeeksText, setSelectedWeeksText] = useState('');
@@ -138,13 +120,13 @@ export default function MesocyclePlanner() {
   const [includeProgressionChart, setIncludeProgressionChart] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
+  const [isExcelExporting, setIsExcelExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
-  const exportPdfButtonRef = useRef<HTMLButtonElement | null>(null);
-  const modalHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [overridden, setOverridden] = useState<OverriddenFields>({
     mesocycleWeeks: false,
     sessionsPerWeek: false,
   });
+  const exportPdfButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const recommended = useMemo(() => getRecommendedDefaults(inputs.level, inputs.focus), [inputs.level, inputs.focus]);
   const program = useMemo(() => generateProgram(inputs), [inputs]);
@@ -157,7 +139,6 @@ export default function MesocyclePlanner() {
       focus,
       mesocycleWeeks: preserve.mesocycleWeeks ? current.mesocycleWeeks : defaults.mesocycleWeeks,
       sessionsPerWeek: preserve.sessionsPerWeek ? current.sessionsPerWeek : defaults.sessionsPerWeek,
-      autoDeload: true,
       strengthProfile: current.strengthProfile,
     };
 
@@ -189,7 +170,6 @@ export default function MesocyclePlanner() {
         mesocycleWeeks: defaults.mesocycleWeeks,
         sessionsPerWeek: defaults.sessionsPerWeek,
         mixedBias: current.focus === 'mixed' ? (defaults.mixedBias ?? 50) : undefined,
-        autoDeload: true,
       });
     });
     setSelectedDay(null);
@@ -238,8 +218,15 @@ export default function MesocyclePlanner() {
     const options = buildValidatedExportOptions();
     if (!options) return;
 
-    await exportProgramAsExcel(program, options);
-    setExportStatus('Exported Excel file.');
+    setIsExcelExporting(true);
+    try {
+      await exportProgramAsExcel(program, options);
+      setExportStatus('Exported Excel file.');
+    } catch {
+      setExportStatus('Excel export failed. Please try again.');
+    } finally {
+      setIsExcelExporting(false);
+    }
   }
 
   async function handlePdfExport() {
@@ -256,57 +243,6 @@ export default function MesocyclePlanner() {
     }
   }
 
-  useEffect(() => {
-    const activeTheme = themeMode === 'system' ? resolveSystemTheme() : themeMode;
-    document.documentElement.dataset.theme = activeTheme;
-
-    if (themeMode === 'system') {
-      window.localStorage.removeItem(THEME_STORAGE_KEY);
-      return;
-    }
-
-    window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
-  }, [themeMode]);
-
-  useEffect(() => {
-    if (themeMode !== 'system' || typeof window.matchMedia !== 'function') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const updateTheme = (event?: MediaQueryListEvent) => {
-      const prefersDark = event ? event.matches : mediaQuery.matches;
-      document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
-    };
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', updateTheme);
-      return () => mediaQuery.removeEventListener('change', updateTheme);
-    }
-
-    mediaQuery.addListener(updateTheme);
-    return () => mediaQuery.removeListener(updateTheme);
-  }, [themeMode]);
-
-  useEffect(() => {
-    if (!isPdfModalOpen) return;
-
-    modalHeadingRef.current?.focus();
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key !== 'Escape' || isPdfExporting) return;
-      setIsPdfModalOpen(false);
-    }
-
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isPdfModalOpen, isPdfExporting]);
-
-  useEffect(() => {
-    if (isPdfModalOpen) return;
-    exportPdfButtonRef.current?.focus();
-  }, [isPdfModalOpen]);
-
   function handleOpenPdfModal() {
     if (!validateSelectedWeeksForExport()) return;
 
@@ -317,6 +253,7 @@ export default function MesocyclePlanner() {
   function handleClosePdfModal() {
     if (isPdfExporting) return;
     setIsPdfModalOpen(false);
+    exportPdfButtonRef.current?.focus();
   }
 
   return (
@@ -359,7 +296,7 @@ export default function MesocyclePlanner() {
           aria-label="Strength profile"
           value={inputs.strengthProfile}
           onChange={(event) => {
-            setInputs((current) => normalizeInputs({ ...current, strengthProfile: event.target.value as StrengthProfile, autoDeload: true }));
+            setInputs((current) => normalizeInputs({ ...current, strengthProfile: event.target.value as StrengthProfile }));
             setSelectedDay(null);
           }}
         >
@@ -382,7 +319,7 @@ export default function MesocyclePlanner() {
               step={1}
               value={inputs.mixedBias ?? 50}
               onChange={(event) => {
-                setInputs((current) => normalizeInputs({ ...current, mixedBias: Number(event.target.value), autoDeload: true }));
+                setInputs((current) => normalizeInputs({ ...current, mixedBias: Number(event.target.value) }));
                 setSelectedDay(null);
               }}
             />
@@ -400,7 +337,7 @@ export default function MesocyclePlanner() {
           value={inputs.mesocycleWeeks}
           onChange={(event) => {
             setOverridden((current) => ({ ...current, mesocycleWeeks: true }));
-            setInputs((current) => normalizeInputs({ ...current, mesocycleWeeks: Number(event.target.value), autoDeload: true }));
+            setInputs((current) => normalizeInputs({ ...current, mesocycleWeeks: Number(event.target.value) }));
             setSelectedDay(null);
           }}
         />
@@ -429,7 +366,7 @@ export default function MesocyclePlanner() {
           value={inputs.sessionsPerWeek}
           onChange={(event) => {
             setOverridden((current) => ({ ...current, sessionsPerWeek: true }));
-            setInputs((current) => normalizeInputs({ ...current, sessionsPerWeek: Number(event.target.value), autoDeload: true }));
+            setInputs((current) => normalizeInputs({ ...current, sessionsPerWeek: Number(event.target.value) }));
             setSelectedDay(null);
           }}
         />
@@ -487,13 +424,13 @@ export default function MesocyclePlanner() {
             <option value="full">Calendar + workout details</option>
           </select>
 
-          <button type="button" onClick={handleExcelExport}>
-            Export Excel (.xlsx)
+          <button type="button" onClick={handleExcelExport} disabled={isExcelExporting}>
+            {isExcelExporting ? 'Exporting…' : 'Export Excel (.xlsx)'}
           </button>
           <button type="button" onClick={handleOpenPdfModal} ref={exportPdfButtonRef}>
             Export PDF
           </button>
-          {exportStatus && <p>{exportStatus}</p>}
+          <p aria-live="polite" aria-atomic="true">{exportStatus ?? ''}</p>
         </div>
       </section>
 
@@ -568,106 +505,26 @@ export default function MesocyclePlanner() {
       </aside>
 
       {isPdfModalOpen && (
-        <div className="modal-backdrop" onClick={handleClosePdfModal}>
-          <div
-            className="modal-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pdf-export-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="pdf-export-modal-title" tabIndex={-1} ref={modalHeadingRef}>
-              PDF export settings
-            </h2>
-
-            <label htmlFor="pdf-mode">PDF mode</label>
-            <select
-              id="pdf-mode"
-              aria-label="PDF mode"
-              value={pdfMode}
-              onChange={(event) => setPdfMode(event.target.value as PdfMode)}
-            >
-              <option value="compact">Compact</option>
-              <option value="detailed">Detailed</option>
-            </select>
-
-            <label htmlFor="paper-size">Paper size</label>
-            <select
-              id="paper-size"
-              aria-label="Paper size"
-              value={paperSize}
-              onChange={(event) => setPaperSize(event.target.value as PaperSize)}
-            >
-              <option value="letter">Letter</option>
-              <option value="a4">A4</option>
-            </select>
-
-            <label htmlFor="orientation">Orientation</label>
-            <select
-              id="orientation"
-              aria-label="Orientation"
-              value={orientation}
-              onChange={(event) => setOrientation(event.target.value as Orientation)}
-            >
-              <option value="auto">Auto</option>
-              <option value="portrait">Portrait</option>
-              <option value="landscape">Landscape</option>
-            </select>
-
-            <label htmlFor="grayscale-toggle">
-              <input
-                id="grayscale-toggle"
-                aria-label="Grayscale"
-                type="checkbox"
-                checked={grayscale}
-                onChange={(event) => setGrayscale(event.target.checked)}
-              />
-              Grayscale
-            </label>
-
-            <label htmlFor="ink-saver-toggle">
-              <input
-                id="ink-saver-toggle"
-                aria-label="Ink saver"
-                type="checkbox"
-                checked={inkSaver}
-                onChange={(event) => setInkSaver(event.target.checked)}
-              />
-              Ink saver
-            </label>
-
-            <label htmlFor="legend-toggle">
-              <input
-                id="legend-toggle"
-                aria-label="Include legend"
-                type="checkbox"
-                checked={includeLegend}
-                onChange={(event) => setIncludeLegend(event.target.checked)}
-              />
-              Include legend
-            </label>
-
-            <label htmlFor="progression-toggle">
-              <input
-                id="progression-toggle"
-                aria-label="Include progression chart"
-                type="checkbox"
-                checked={includeProgressionChart}
-                onChange={(event) => setIncludeProgressionChart(event.target.checked)}
-              />
-              Include progression chart
-            </label>
-
-            <div className="modal-actions">
-              <button type="button" onClick={handleClosePdfModal} disabled={isPdfExporting}>
-                Cancel
-              </button>
-              <button type="button" onClick={handlePdfExport} disabled={isPdfExporting}>
-                Generate PDF
-              </button>
-            </div>
-          </div>
-        </div>
+        <PdfExportModal
+          pdfMode={pdfMode}
+          setPdfMode={setPdfMode}
+          paperSize={paperSize}
+          setPaperSize={setPaperSize}
+          orientation={orientation}
+          setOrientation={setOrientation}
+          grayscale={grayscale}
+          setGrayscale={setGrayscale}
+          inkSaver={inkSaver}
+          setInkSaver={setInkSaver}
+          includeLegend={includeLegend}
+          setIncludeLegend={setIncludeLegend}
+          includeProgressionChart={includeProgressionChart}
+          setIncludeProgressionChart={setIncludeProgressionChart}
+          exportDetail={exportDetail}
+          isExporting={isPdfExporting}
+          onExport={handlePdfExport}
+          onClose={handleClosePdfModal}
+        />
       )}
     </div>
   );

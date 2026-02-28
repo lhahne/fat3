@@ -40,32 +40,28 @@ export async function exportProgramAsExcel(program: ProgramOutput, options: Expo
   downloadBinary(bytes, `${baseName(program, nowIso)}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
+function pickPdfRenderOptions(options: ExportOptions) {
+  return {
+    mode: options.pdfMode,
+    detail: options.detail,
+    paperSize: options.paperSize,
+    orientation: options.orientation,
+    grayscale: options.grayscale,
+    inkSaver: options.inkSaver,
+    includeLegend: options.includeLegend,
+    includeProgressionChart: options.includeProgressionChart,
+  };
+}
+
 export async function exportProgramAsPdf(program: ProgramOutput, options: ExportOptions): Promise<void> {
   const nowIso = new Date().toISOString();
   const [{ mapProgramToExportModel }, { buildPdfBytes, buildPdfRenderModel }] = await Promise.all([
     import('./mapper'),
     import('./pdf'),
   ]);
+  const pdfOptions = pickPdfRenderOptions(options);
   const model = mapProgramToExportModel(program, options, nowIso);
-  const renderModel = buildPdfRenderModel(model, {
-    mode: options.pdfMode,
-    detail: options.detail,
-    paperSize: options.paperSize,
-    orientation: options.orientation,
-    grayscale: options.grayscale,
-    inkSaver: options.inkSaver,
-    includeLegend: options.includeLegend,
-    includeProgressionChart: options.includeProgressionChart,
-  });
-  const bytes = await buildPdfBytes(renderModel, {
-    mode: options.pdfMode,
-    detail: options.detail,
-    paperSize: options.paperSize,
-    orientation: options.orientation,
-    grayscale: options.grayscale,
-    inkSaver: options.inkSaver,
-    includeLegend: options.includeLegend,
-    includeProgressionChart: options.includeProgressionChart,
-  });
+  const renderModel = buildPdfRenderModel(model, pdfOptions);
+  const bytes = await buildPdfBytes(renderModel, pdfOptions);
   downloadBinary(bytes, `${baseName(program, nowIso)}.pdf`, 'application/pdf');
 }

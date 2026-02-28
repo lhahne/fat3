@@ -11,7 +11,6 @@ describe('PDF export', () => {
       mesocycleWeeks: 6,
       level: 'intermediate',
       sessionsPerWeek: 4,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -70,7 +69,6 @@ describe('PDF export', () => {
       mesocycleWeeks: 4,
       level: 'beginner',
       sessionsPerWeek: 3,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 

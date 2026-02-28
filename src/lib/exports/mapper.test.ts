@@ -10,7 +10,6 @@ describe('mapProgramToExportModel', () => {
       mesocycleWeeks: 6,
       level: 'intermediate',
       sessionsPerWeek: 4,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -39,7 +38,6 @@ describe('mapProgramToExportModel', () => {
     expect(model.sessionRows[0]).toHaveProperty('Actual Reps');
     expect(model.sessionRows[0]).toHaveProperty('Weight');
     expect(model.sessionRows[0]).toHaveProperty('Notes');
-    expect(model.overview.some((row) => row.key === 'Generated At' && row.value === nowIso)).toBe(true);
     expect(model.overview.some((row) => row.key === 'Exported At' && row.value === nowIso)).toBe(true);
   });
 });

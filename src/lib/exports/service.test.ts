@@ -34,7 +34,6 @@ describe('export service', () => {
       mesocycleWeeks: 4,
       level: 'beginner',
       sessionsPerWeek: 3,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 
@@ -85,7 +84,6 @@ describe('export service', () => {
       mesocycleWeeks: 4,
       level: 'beginner',
       sessionsPerWeek: 3,
-      autoDeload: true,
       strengthProfile: 'balanced',
     });
 

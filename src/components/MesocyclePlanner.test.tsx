@@ -13,9 +13,65 @@ vi.mock('../lib/exports/service', () => ({
 }));
 
 describe('MesocyclePlanner', () => {
+  let systemPrefersDark = false;
+  const storageState = new Map<string, string>();
+  const localStorageMock: Storage = {
+    get length() {
+      return storageState.size;
+    },
+    clear() {
+      storageState.clear();
+    },
+    getItem(key: string) {
+      return storageState.has(key) ? storageState.get(key) ?? null : null;
+    },
+    key(index: number) {
+      return Array.from(storageState.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      storageState.delete(key);
+    },
+    setItem(key: string, value: string) {
+      storageState.set(key, value);
+    },
+  };
+  const mediaQueryListeners = new Set<(event: MediaQueryListEvent) => void>();
+
+  function dispatchSystemThemeChange(nextPrefersDark: boolean) {
+    systemPrefersDark = nextPrefersDark;
+    const event = { matches: nextPrefersDark } as MediaQueryListEvent;
+    mediaQueryListeners.forEach((listener) => listener(event));
+  }
+
   beforeEach(() => {
     excelMock.mockClear();
     pdfMock.mockClear();
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      configurable: true,
+    });
+    storageState.clear();
+    document.documentElement.removeAttribute('data-theme');
+    systemPrefersDark = false;
+    mediaQueryListeners.clear();
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-color-scheme: dark)' ? systemPrefersDark : false,
+      media: query,
+      onchange: null,
+      addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+        mediaQueryListeners.add(listener);
+      },
+      removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+        mediaQueryListeners.delete(listener);
+      },
+      addListener: (listener: (event: MediaQueryListEvent) => void) => {
+        mediaQueryListeners.add(listener);
+      },
+      removeListener: (listener: (event: MediaQueryListEvent) => void) => {
+        mediaQueryListeners.delete(listener);
+      },
+      dispatchEvent: () => true,
+    }));
   });
 
   it('renders controls and calendar weeks with seven days', () => {
@@ -137,5 +193,34 @@ describe('MesocyclePlanner', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'PDF export settings' })).not.toBeInTheDocument();
     expect(pdfMock).not.toHaveBeenCalled();
+  });
+
+  it('uses automatic theme mode by default and follows system preference', () => {
+    systemPrefersDark = true;
+    render(<MesocyclePlanner />);
+
+    expect(screen.getByRole('button', { name: 'Use system theme' })).toHaveAttribute('aria-pressed', 'true');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('supports manual theme selection and persists it', () => {
+    render(<MesocyclePlanner />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use dark theme' }));
+
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('theme-preference')).toBe('dark');
+  });
+
+  it('updates theme automatically when system preference changes in automatic mode', () => {
+    render(<MesocyclePlanner />);
+    expect(document.documentElement.dataset.theme).toBe('light');
+
+    dispatchSystemThemeChange(true);
+    expect(document.documentElement.dataset.theme).toBe('dark');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Use light theme' }));
+    dispatchSystemThemeChange(false);
+    expect(document.documentElement.dataset.theme).toBe('light');
   });
 });

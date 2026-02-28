@@ -19,6 +19,15 @@ type OverriddenFields = {
   sessionsPerWeek: boolean;
 };
 
+type ThemeMode = 'system' | 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'theme-preference';
+const THEME_OPTIONS: Array<{ value: ThemeMode; label: string }> = [
+  { value: 'system', label: 'Use system theme' },
+  { value: 'light', label: 'Use light theme' },
+  { value: 'dark', label: 'Use dark theme' },
+];
+
 const FOCUS_OPTIONS: Array<{ value: Focus; label: string }> = [
   { value: 'strength', label: 'Strength' },
   { value: 'endurance', label: 'Endurance' },
@@ -37,6 +46,22 @@ const STRENGTH_PROFILE_OPTIONS: Array<{ value: StrengthProfile; label: string }>
   { value: 'balanced', label: 'Balanced' },
   { value: 'endurance-support', label: 'Endurance Support Strength' },
 ];
+
+function resolveSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function readStoredThemeMode(): ThemeMode {
+  if (typeof window === 'undefined') return 'system';
+
+  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedValue === 'light' || storedValue === 'dark') return storedValue;
+  return 'system';
+}
 
 function createInitialInputs(): PlannerInputs {
   const defaults = getRecommendedDefaults('beginner', 'strength');
@@ -66,8 +91,40 @@ function sessionLabel(type: string): string {
   return 'Rest';
 }
 
+function ThemeIcon({ mode }: { mode: ThemeMode }) {
+  if (mode === 'light') {
+    return (
+      <svg className="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+        <path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  if (mode === 'dark') {
+    return (
+      <svg className="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M14.5 3.2a8.9 8.9 0 1 0 6.3 14.9 7.7 7.7 0 1 1-6.3-14.9z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4" y="5" width="16" height="11" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M10 19h4M12 16v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="8.5" cy="10.5" r="1.2" fill="currentColor" />
+      <path d="M14.5 9.3a2.4 2.4 0 1 0 1.8 4.1 2 2 0 1 1-1.8-4.1z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function MesocyclePlanner() {
   const [inputs, setInputs] = useState<PlannerInputs>(createInitialInputs);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(readStoredThemeMode);
   const [selectedDay, setSelectedDay] = useState<DayPlan | null>(null);
   const [exportScope, setExportScope] = useState<ExportScope>('all');
   const [selectedWeeksText, setSelectedWeeksText] = useState('');
@@ -200,6 +257,36 @@ export default function MesocyclePlanner() {
   }
 
   useEffect(() => {
+    const activeTheme = themeMode === 'system' ? resolveSystemTheme() : themeMode;
+    document.documentElement.dataset.theme = activeTheme;
+
+    if (themeMode === 'system') {
+      window.localStorage.removeItem(THEME_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (themeMode !== 'system' || typeof window.matchMedia !== 'function') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const updateTheme = (event?: MediaQueryListEvent) => {
+      const prefersDark = event ? event.matches : mediaQuery.matches;
+      document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateTheme);
+      return () => mediaQuery.removeEventListener('change', updateTheme);
+    }
+
+    mediaQuery.addListener(updateTheme);
+    return () => mediaQuery.removeListener(updateTheme);
+  }, [themeMode]);
+
+  useEffect(() => {
     if (!isPdfModalOpen) return;
 
     modalHeadingRef.current?.focus();
@@ -234,6 +321,21 @@ export default function MesocyclePlanner() {
 
   return (
     <div className="planner-shell">
+      <div className="theme-switcher" role="group" aria-label="Theme">
+        {THEME_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={`theme-switcher-button${themeMode === option.value ? ' is-active' : ''}`}
+            onClick={() => setThemeMode(option.value)}
+            aria-label={option.label}
+            aria-pressed={themeMode === option.value}
+          >
+            <ThemeIcon mode={option.value} />
+          </button>
+        ))}
+      </div>
+
       <section className="controls" aria-label="Planner controls">
         <h1>Mesocycle Planner</h1>
 

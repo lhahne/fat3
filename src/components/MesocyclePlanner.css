@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg-page: #ffffff;
   --bg-panel: #ffffff;
   --bg-subtle: #fafafa;
@@ -7,6 +8,7 @@
   --text-secondary: #6b7280;
   --text-tertiary: #9ca3af;
   --border: #e5e7eb;
+  --border-strong: #d1d5db;
   --border-focus: #3b82f6;
   --accent: #3b82f6;
   --accent-hover: #2563eb;
@@ -29,17 +31,89 @@
   --radius-lg: 14px;
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-page: #0f172a;
+  --bg-panel: #111827;
+  --bg-subtle: #1f2937;
+  --bg-input: #1f2937;
+  --text-primary: #f3f4f6;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --border: #334155;
+  --border-strong: #475569;
+  --accent-light: rgba(59, 130, 246, 0.2);
+  --strength-bg: rgba(5, 150, 105, 0.18);
+  --endurance-bg: rgba(2, 132, 199, 0.18);
+  --mixed-bg: rgba(99, 102, 241, 0.2);
+  --deload-bg: rgba(217, 119, 6, 0.2);
+  --rest-bg: #1f2937;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
 * {
   box-sizing: border-box;
 }
 
 .planner-shell {
+  position: relative;
   display: grid;
   grid-template-columns: 300px 1fr 340px;
   gap: 1.5rem;
   min-height: 100vh;
   padding: 2rem;
   background: var(--bg-page);
+}
+
+.theme-switcher {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 5;
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+}
+
+.theme-switcher-button {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.theme-switcher-button:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.theme-switcher-button:focus-visible {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.theme-switcher-button.is-active {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.theme-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .controls {
@@ -85,7 +159,7 @@
 
 .controls select:hover,
 .controls input:hover {
-  border-color: #d1d5db;
+  border-color: var(--border-strong);
 }
 
 .controls select:focus,
@@ -194,7 +268,7 @@
 }
 
 .export-controls button {
-  background: white;
+  background: var(--bg-panel);
   color: var(--text-primary);
   border: 1px solid var(--border);
   box-shadow: none;
@@ -202,7 +276,7 @@
 
 .export-controls button:hover {
   background: var(--bg-subtle);
-  border-color: #d1d5db;
+  border-color: var(--border-strong);
 }
 
 .export-controls p {
@@ -379,7 +453,7 @@
   display: grid;
   align-content: start;
   gap: 0.2rem;
-  background: white;
+  background: var(--bg-panel);
   text-align: left;
   font: inherit;
   cursor: pointer;
@@ -513,6 +587,7 @@
 @media (max-width: 1100px) {
   .planner-shell {
     grid-template-columns: 1fr 320px;
+    padding-top: 4.5rem;
   }
 
   .controls {
@@ -547,6 +622,12 @@
   .planner-shell {
     grid-template-columns: 1fr;
     padding: 1rem;
+    padding-top: 4.75rem;
+  }
+
+  .theme-switcher {
+    top: 0.75rem;
+    right: 0.75rem;
   }
 
   .controls {

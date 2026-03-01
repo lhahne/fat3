@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   generateProgram,
+  getDeloadWeeks,
   getRecommendedDefaults,
   normalizeInputs,
   type PlannerInputs,
@@ -138,5 +139,47 @@ describe('generateProgram', () => {
     );
 
     expect(adjustedStrengthDay).toBeDefined();
+  });
+});
+
+describe('getDeloadWeeks', () => {
+  it('returns only the final week for 4-week programs', () => {
+    expect(getDeloadWeeks(4)).toEqual([4]);
+  });
+
+  it('returns only the final week for 6-week programs', () => {
+    expect(getDeloadWeeks(6)).toEqual([6]);
+  });
+
+  it('returns two deload weeks for 7-week programs', () => {
+    const deloads = getDeloadWeeks(7);
+    expect(deloads.length).toBe(2);
+    expect(deloads).toContain(7);
+  });
+
+  it('returns two deload weeks for 9-week programs', () => {
+    const deloads = getDeloadWeeks(9);
+    expect(deloads.length).toBe(2);
+    expect(deloads).toContain(9);
+  });
+
+  it('returns deloads at weeks 4, 8, and final for 10-week programs', () => {
+    const deloads = getDeloadWeeks(10);
+    expect(deloads).toContain(4);
+    expect(deloads).toContain(8);
+    expect(deloads).toContain(10);
+  });
+
+  it('returns deloads at weeks 4, 8, and 12 for 12-week programs', () => {
+    expect(getDeloadWeeks(12)).toEqual(expect.arrayContaining([4, 8, 12]));
+    expect(getDeloadWeeks(12).length).toBe(3);
+  });
+
+  it('does not return weeks beyond the program length', () => {
+    for (const weekCount of [4, 6, 8, 10, 12]) {
+      for (const deloadWeek of getDeloadWeeks(weekCount)) {
+        expect(deloadWeek).toBeLessThanOrEqual(weekCount);
+      }
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { ExportDetail, Orientation, PaperSize, PdfMode } from '../lib/exports/types';
+import type { Orientation, PaperSize, PdfMode } from '../lib/exports/types';
 
 export type PdfExportModalProps = {
   pdfMode: PdfMode;
@@ -16,7 +16,6 @@ export type PdfExportModalProps = {
   setIncludeLegend: (value: boolean) => void;
   includeProgressionChart: boolean;
   setIncludeProgressionChart: (value: boolean) => void;
-  exportDetail: ExportDetail;
   isExporting: boolean;
   onExport: () => void;
   onClose: () => void;
@@ -46,7 +45,9 @@ export function PdfExportModal({
 
   useEffect(() => {
     headingRef.current?.focus();
+  }, []);
 
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         if (!isExporting) onClose();

@@ -8,7 +8,6 @@ export type PlannerInputs = {
   mesocycleWeeks: number;
   level: Level;
   sessionsPerWeek: number;
-  autoDeload: true;
   strengthProfile: StrengthProfile;
 };
 
@@ -183,7 +182,7 @@ const STRENGTH_TEMPLATES: Record<StrengthProfile, StrengthDayTemplate> = {
     C: {
       S1: ['Front Squat', 'Split Squat', 'Step-up', 'Goblet Squat'],
       S2: ['Incline Bench', 'Close-Grip Bench', 'DB Press', 'Dip/Assisted Dip'],
-      S3: ['Row Variant', 'Pull-up Variant', 'Cable Row', 'Machine Row'],
+      S3: ['Pendlay Row', 'Weighted Pull-up', 'Cable Row', 'Machine Row'],
       S4: ['Hip Thrust', 'Hamstring Curl', 'RDL (light)', 'Glute Bridge'],
       S5: ['Rear Delt Fly', 'Lateral Raise', 'Calf Raise', 'Arm Superset'],
       S6: ['Carry', 'Pallof Press', 'Dead Bug', 'Plank'],
@@ -212,7 +211,7 @@ const STRENGTH_TEMPLATES: Record<StrengthProfile, StrengthDayTemplate> = {
       S3: ['Seated Row', 'Pull-up/Assisted', 'Single-Arm Cable Row', 'Band Row'],
       S4: ['Calf Complex', 'Tibialis Raise', 'Soleus Raise', 'Isometric Calf Hold'],
       S5: ['Copenhagen Plank', 'Pallof Press', 'Dead Bug', 'Bird Dog'],
-      S6: ['Easy Mobility Circuit', 'Easy Mobility Circuit', 'Easy Mobility Circuit', 'Easy Mobility Circuit'],
+      S6: ['Easy Mobility Circuit', 'Hip 90/90 Flow', 'Thoracic Rotation', 'Hip Flexor Stretch Flow'],
     },
   },
 };
@@ -523,7 +522,6 @@ export function normalizeInputs(inputs: PlannerInputs): PlannerInputs {
     ...inputs,
     mesocycleWeeks: clamp(toInt(inputs.mesocycleWeeks), 4, 12),
     sessionsPerWeek: clamp(toInt(inputs.sessionsPerWeek), 2, 6),
-    autoDeload: true,
     strengthProfile: inputs.strengthProfile ?? 'balanced',
   };
 
@@ -550,7 +548,7 @@ export function getDeloadWeeks(weekCount: number): number[] {
 
 export function generateProgram(rawInputs: PlannerInputs): ProgramOutput {
   const inputs = normalizeInputs(rawInputs);
-  const deloadWeekIndexes = new Set<number>(inputs.autoDeload ? getDeloadWeeks(inputs.mesocycleWeeks) : []);
+  const deloadWeekIndexes = new Set<number>(getDeloadWeeks(inputs.mesocycleWeeks));
 
   const weeks: WeekPlan[] = [];
 

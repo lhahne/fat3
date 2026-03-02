@@ -11,7 +11,6 @@ describe('buildExcelWorkbook', () => {
       mesocycleWeeks: 4,
       level: 'beginner',
       sessionsPerWeek: 3,
-      autoDeload: true,
       strengthProfile: 'powerlifting',
     });
 

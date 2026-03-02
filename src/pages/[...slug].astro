@@ -1,0 +1,9 @@
+---
+export const prerender = false;
+import Layout from '../layouts/Layout.astro';
+import { AppShell } from '../components/AppShell';
+---
+
+<Layout>
+	<AppShell client:load />
+</Layout>

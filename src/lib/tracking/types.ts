@@ -1,6 +1,6 @@
 import type { ProgramOutput } from '../planner';
 
-export type AppView = 'planner' | { tracking: string }; // string = mesocycle id
+export type AppView = 'planner' | { tracking: string; day?: number }; // string = mesocycle id
 
 export type SetLog = {
   completed: boolean;

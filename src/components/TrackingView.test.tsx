@@ -64,42 +64,52 @@ function makeMesocycle(): TrackedMesocycle {
 }
 
 describe('TrackingView', () => {
+  const defaultProps = () => ({
+    mesocycle: makeMesocycle(),
+    onSelectDay: vi.fn(),
+    onUpdateLog: vi.fn(),
+    onStopTracking: vi.fn(),
+  });
+
   it('renders mesocycle name', () => {
-    render(<TrackingView mesocycle={makeMesocycle()} onUpdateLog={vi.fn()} onStopTracking={vi.fn()} />);
+    render(<TrackingView {...defaultProps()} />);
     expect(screen.getByText('Test Meso')).toBeInTheDocument();
   });
 
   it('renders week navigation buttons', () => {
-    render(<TrackingView mesocycle={makeMesocycle()} onUpdateLog={vi.fn()} onStopTracking={vi.fn()} />);
+    render(<TrackingView {...defaultProps()} />);
     expect(screen.getByText('Week 0')).toBeInTheDocument();
     expect(screen.getByText('Week 1')).toBeInTheDocument();
   });
 
   it('shows training day buttons for selected week', () => {
-    render(<TrackingView mesocycle={makeMesocycle()} onUpdateLog={vi.fn()} onStopTracking={vi.fn()} />);
+    render(<TrackingView {...defaultProps()} />);
     expect(screen.getByText('Upper Body A')).toBeInTheDocument();
   });
 
-  it('opens session tracker when a day is clicked', () => {
-    render(<TrackingView mesocycle={makeMesocycle()} onUpdateLog={vi.fn()} onStopTracking={vi.fn()} />);
-    fireEvent.click(screen.getByText('Upper Body A'));
-    // Should now show the session tracker with exercise details
+  it('shows session tracker when selectedDay is set', () => {
+    render(<TrackingView {...defaultProps()} selectedDay={0} />);
     expect(screen.getByText('Bench Press')).toBeInTheDocument();
   });
 
-  it('navigates back to day selection', () => {
-    render(<TrackingView mesocycle={makeMesocycle()} onUpdateLog={vi.fn()} onStopTracking={vi.fn()} />);
+  it('calls onSelectDay when a day button is clicked', () => {
+    const props = defaultProps();
+    render(<TrackingView {...props} />);
     fireEvent.click(screen.getByText('Upper Body A'));
+    expect(props.onSelectDay).toHaveBeenCalledWith(0);
+  });
+
+  it('calls onSelectDay(null) when back button is clicked', () => {
+    const props = defaultProps();
+    render(<TrackingView {...props} selectedDay={0} />);
     fireEvent.click(screen.getByText('Back to days'));
-    // Should be back to day selection
-    expect(screen.getByText('Upper Body A')).toBeInTheDocument();
-    expect(screen.queryByText('Bench Press')).not.toBeInTheDocument();
+    expect(props.onSelectDay).toHaveBeenCalledWith(null);
   });
 
   it('calls onStopTracking when stop button is clicked', () => {
-    const onStopTracking = vi.fn();
-    render(<TrackingView mesocycle={makeMesocycle()} onUpdateLog={vi.fn()} onStopTracking={onStopTracking} />);
+    const props = defaultProps();
+    render(<TrackingView {...props} />);
     fireEvent.click(screen.getByText('Stop Tracking'));
-    expect(onStopTracking).toHaveBeenCalledTimes(1);
+    expect(props.onStopTracking).toHaveBeenCalledTimes(1);
   });
 });

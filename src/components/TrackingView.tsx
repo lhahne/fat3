@@ -6,14 +6,15 @@ import './TrackingView.css';
 
 export type TrackingViewProps = {
   mesocycle: TrackedMesocycle;
+  selectedDay?: number;
+  onSelectDay: (dayIndex: number | null) => void;
   onUpdateLog: (dayKey: string, dayLog: DayLog) => void;
   onStopTracking: () => void;
 };
 
-export function TrackingView({ mesocycle, onUpdateLog, onStopTracking }: TrackingViewProps) {
+export function TrackingView({ mesocycle, selectedDay, onSelectDay, onUpdateLog, onStopTracking }: TrackingViewProps) {
   const { program, logs } = mesocycle;
   const [selectedWeek, setSelectedWeek] = useState(() => program.weeks[0]?.weekIndex ?? 0);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   async function handleExport() {
@@ -32,7 +33,7 @@ export function TrackingView({ mesocycle, onUpdateLog, onStopTracking }: Trackin
   const week = program.weeks.find((w) => w.weekIndex === selectedWeek);
   const trainingDays = week?.days.filter((d) => d.isTrainingDay) ?? [];
 
-  const day = selectedDay != null ? week?.days.find((d) => d.dayIndex === selectedDay) : null;
+  const day = selectedDay != null ? week?.days.find((d) => d.dayIndex === selectedDay) : undefined;
 
   return (
     <div className="tracking-view">
@@ -60,7 +61,7 @@ export function TrackingView({ mesocycle, onUpdateLog, onStopTracking }: Trackin
                     className={`week-nav-button${selectedWeek === w.weekIndex ? ' is-active' : ''}${allComplete ? ' is-complete' : hasData ? ' has-data' : ''}`}
                     onClick={() => {
                       setSelectedWeek(w.weekIndex);
-                      setSelectedDay(null);
+                      onSelectDay(null);
                     }}
                   >
                     Week {w.weekIndex}
@@ -82,7 +83,7 @@ export function TrackingView({ mesocycle, onUpdateLog, onStopTracking }: Trackin
       </div>
 
       <div className="tracking-main">
-        {selectedDay == null && (
+        {selectedDay === undefined && (
           <div className="day-selector">
             <h3>Week {selectedWeek} — {week?.objective}</h3>
             <div className="day-buttons">
@@ -96,7 +97,7 @@ export function TrackingView({ mesocycle, onUpdateLog, onStopTracking }: Trackin
                     key={d.dayIndex}
                     type="button"
                     className={`day-select-button type-${d.sessionType}${isComplete ? ' is-complete' : hasData ? ' has-data' : ''}`}
-                    onClick={() => setSelectedDay(d.dayIndex)}
+                    onClick={() => onSelectDay(d.dayIndex)}
                   >
                     <strong>{d.dateLabel}</strong>
                     <span>{d.workout?.title ?? d.sessionType}</span>
@@ -111,7 +112,7 @@ export function TrackingView({ mesocycle, onUpdateLog, onStopTracking }: Trackin
 
         {selectedDay != null && day?.workout && (
           <>
-            <button type="button" className="back-button" onClick={() => setSelectedDay(null)}>
+            <button type="button" className="back-button" onClick={() => onSelectDay(null)}>
               Back to days
             </button>
             <SessionTracker

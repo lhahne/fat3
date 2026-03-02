@@ -6,4 +6,10 @@ describe('homepage wiring', () => {
     expect(source).toContain("import { AppShell } from '../components/AppShell';");
     expect(source).toContain('<AppShell client:load />');
   });
+
+  it('has a catch-all route that mounts AppShell for SPA routing', () => {
+    const source = readFileSync('src/pages/[...slug].astro', 'utf-8');
+    expect(source).toContain("import { AppShell } from '../components/AppShell';");
+    expect(source).toContain('<AppShell client:load />');
+  });
 });

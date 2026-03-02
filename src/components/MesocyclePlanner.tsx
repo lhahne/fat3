@@ -8,6 +8,7 @@ import {
   type Focus,
   type Level,
   type PlannerInputs,
+  type ProgramOutput,
   type StrengthProfile,
 } from '../lib/planner';
 import { exportProgramAsExcel, exportProgramAsPdf } from '../lib/exports/service';
@@ -104,7 +105,11 @@ function ThemeIcon({ mode }: { mode: ThemeMode }) {
   );
 }
 
-export default function MesocyclePlanner() {
+type MesocyclePlannerProps = {
+  onStartTracking?: (program: ProgramOutput) => void;
+};
+
+export default function MesocyclePlanner({ onStartTracking }: MesocyclePlannerProps = {}) {
   const [inputs, setInputs] = useState<PlannerInputs>(createInitialInputs);
   const [themeMode, setThemeMode] = useTheme();
   const [selectedDay, setSelectedDay] = useState<DayPlan | null>(null);
@@ -435,6 +440,12 @@ export default function MesocyclePlanner() {
           </button>
           <p aria-live="polite" aria-atomic="true">{exportStatus ?? ''}</p>
         </div>
+
+        {onStartTracking && (
+          <button type="button" className="start-tracking-button" onClick={() => onStartTracking(program)}>
+            Start Tracking
+          </button>
+        )}
       </section>
 
       <section className="calendar" aria-label="Program calendar">

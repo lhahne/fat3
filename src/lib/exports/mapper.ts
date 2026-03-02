@@ -1,4 +1,5 @@
 import type { DayPlan, ProgramOutput } from '../planner';
+import type { DayLog } from '../tracking/types';
 import type { CalendarRow, ExportModel, ExportOptions, ProgressionRow, SessionRow, WorkoutRow } from './types';
 
 const WEEKDAY_KEYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
@@ -89,15 +90,37 @@ function mapWorkoutRows(weeks: ProgramOutput['weeks']): WorkoutRow[] {
   return rows;
 }
 
-function mapSessionRows(weeks: ProgramOutput['weeks']): SessionRow[] {
+function mapSessionRows(weeks: ProgramOutput['weeks'], logs?: Record<string, DayLog>): SessionRow[] {
   const rows: SessionRow[] = [];
 
   for (const week of weeks) {
     for (const day of week.days) {
       if (!day.workout) continue;
 
+      const dayKey = `${week.weekIndex}-${day.dayIndex}`;
+      const dayLog = logs?.[dayKey];
+
       for (const block of day.workout.blocks) {
-        for (const item of block.items) {
+        for (let itemIndex = 0; itemIndex < block.items.length; itemIndex++) {
+          const item = block.items[itemIndex];
+          const exerciseKey = `${week.weekIndex}-${day.dayIndex}-${block.title}-${itemIndex}`;
+          const exerciseLog = dayLog?.exercises[exerciseKey];
+
+          let actualReps = '';
+          let weight = '';
+          let notes = '';
+
+          if (exerciseLog) {
+            const completedSets = exerciseLog.sets.filter((s) => s.completed);
+            if (completedSets.length > 0) {
+              actualReps = completedSets.map((s) => s.reps ?? '').join(', ');
+              weight = completedSets.map((s) => s.weight ?? '').join(', ');
+            }
+            if (exerciseLog.notes) {
+              notes = exerciseLog.notes;
+            }
+          }
+
           rows.push({
             Week: week.weekIndex,
             'Week Objective': week.objective,
@@ -106,9 +129,9 @@ function mapSessionRows(weeks: ProgramOutput['weeks']): SessionRow[] {
             'Session Type': day.workout.title,
             Exercise: item.name,
             Prescription: item.prescription,
-            'Actual Reps': '',
-            Weight: '',
-            Notes: '',
+            'Actual Reps': actualReps,
+            Weight: weight,
+            Notes: notes,
           });
         }
       }
@@ -147,7 +170,7 @@ function mapProgressionRows(weeks: ProgramOutput['weeks']): ProgressionRow[] {
   });
 }
 
-export function mapProgramToExportModel(program: ProgramOutput, options: ExportOptions, nowIso?: string): ExportModel {
+export function mapProgramToExportModel(program: ProgramOutput, options: ExportOptions, nowIso?: string, logs?: Record<string, DayLog>): ExportModel {
   const filteredWeeks = selectWeeks(program, options);
   const resolvedNowIso = nowIso ?? new Date().toISOString();
 
@@ -175,7 +198,7 @@ export function mapProgramToExportModel(program: ProgramOutput, options: ExportO
     { key: 'Average Weekly Effort', value: averageEffort },
   ];
 
-  const sessionRows = mapSessionRows(filteredWeeks);
+  const sessionRows = mapSessionRows(filteredWeeks, logs);
   const calendarRows = mapCalendarRows(filteredWeeks);
   const workoutRows = options.detail === 'calendar-only' ? [] : mapWorkoutRows(filteredWeeks);
   const progressionRows = mapProgressionRows(filteredWeeks);

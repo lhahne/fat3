@@ -1,4 +1,5 @@
 import type { ProgramOutput } from '../planner';
+import type { DayLog } from '../tracking/types';
 import type { ExportOptions } from './types';
 
 function timestampDate(nowIso: string): string {
@@ -29,13 +30,13 @@ function downloadBinary(data: BlobPart | Uint8Array, filename: string, mimeType:
   URL.revokeObjectURL(url);
 }
 
-export async function exportProgramAsExcel(program: ProgramOutput, options: ExportOptions): Promise<void> {
+export async function exportProgramAsExcel(program: ProgramOutput, options: ExportOptions, logs?: Record<string, DayLog>): Promise<void> {
   const nowIso = new Date().toISOString();
   const [{ mapProgramToExportModel }, { buildExcelWorkbook }] = await Promise.all([
     import('./mapper'),
     import('./excel'),
   ]);
-  const model = mapProgramToExportModel(program, options, nowIso);
+  const model = mapProgramToExportModel(program, options, nowIso, logs);
   const bytes = await buildExcelWorkbook(model);
   downloadBinary(bytes, `${baseName(program, nowIso)}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
@@ -53,14 +54,14 @@ function pickPdfRenderOptions(options: ExportOptions) {
   };
 }
 
-export async function exportProgramAsPdf(program: ProgramOutput, options: ExportOptions): Promise<void> {
+export async function exportProgramAsPdf(program: ProgramOutput, options: ExportOptions, logs?: Record<string, DayLog>): Promise<void> {
   const nowIso = new Date().toISOString();
   const [{ mapProgramToExportModel }, { buildPdfBytes, buildPdfRenderModel }] = await Promise.all([
     import('./mapper'),
     import('./pdf'),
   ]);
   const pdfOptions = pickPdfRenderOptions(options);
-  const model = mapProgramToExportModel(program, options, nowIso);
+  const model = mapProgramToExportModel(program, options, nowIso, logs);
   const renderModel = buildPdfRenderModel(model, pdfOptions);
   const bytes = await buildPdfBytes(renderModel, pdfOptions);
   downloadBinary(bytes, `${baseName(program, nowIso)}.pdf`, 'application/pdf');

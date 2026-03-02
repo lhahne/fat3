@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateProgram } from '../planner';
+import type { DayLog } from '../tracking/types';
 import { mapProgramToExportModel } from './mapper';
 
 describe('mapProgramToExportModel', () => {
@@ -186,6 +187,99 @@ describe('mapProgramToExportModel', () => {
     for (const row of model.progressionRows) {
       expect(row).toHaveProperty('Mixed Sessions');
       expect(typeof row['Mixed Sessions']).toBe('number');
+    }
+  });
+
+  it('populates Actual Reps, Weight and Notes from tracking logs', () => {
+    const program = generateProgram({
+      focus: 'strength',
+      mesocycleWeeks: 4,
+      level: 'beginner',
+      sessionsPerWeek: 3,
+      strengthProfile: 'balanced',
+    });
+
+    // Find the first training day to build a log for it
+    const firstWeek = program.weeks[0];
+    const firstTrainingDay = firstWeek.days.find((d) => d.isTrainingDay)!;
+    const dayKey = `${firstWeek.weekIndex}-${firstTrainingDay.dayIndex}`;
+
+    // Build exercise logs matching the day's workout blocks
+    const exercises: Record<string, { sets: { completed: boolean; weight?: number; reps?: number }[]; notes?: string }> = {};
+    for (const block of firstTrainingDay.workout!.blocks) {
+      for (let i = 0; i < block.items.length; i++) {
+        const key = `${firstWeek.weekIndex}-${firstTrainingDay.dayIndex}-${block.title}-${i}`;
+        exercises[key] = {
+          sets: [
+            { completed: true, weight: 80, reps: 6 },
+            { completed: true, weight: 80, reps: 6 },
+            { completed: true, weight: 80, reps: 5 },
+          ],
+          notes: 'Felt strong',
+        };
+      }
+    }
+
+    const logs: Record<string, DayLog> = {
+      [dayKey]: { updatedAt: '2026-01-05T10:00:00Z', exercises },
+    };
+
+    const model = mapProgramToExportModel(
+      program,
+      {
+        scope: 'all',
+        detail: 'full',
+        pdfMode: 'compact',
+        paperSize: 'letter',
+        orientation: 'auto',
+        grayscale: false,
+        inkSaver: true,
+        includeLegend: true,
+        includeProgressionChart: false,
+      },
+      '2024-01-01T00:00:00.000Z',
+      logs,
+    );
+
+    // Find a session row that corresponds to the logged day
+    const loggedRow = model.sessionRows.find(
+      (r) => r.Week === firstWeek.weekIndex && r['Day Label'] === firstTrainingDay.dateLabel && r['Actual Reps'] !== '',
+    );
+    expect(loggedRow).toBeDefined();
+    expect(loggedRow!['Actual Reps']).toBe('6, 6, 5');
+    expect(loggedRow!.Weight).toBe('80, 80, 80');
+    expect(loggedRow!.Notes).toBe('Felt strong');
+  });
+
+  it('leaves Actual Reps/Weight/Notes empty when no logs provided', () => {
+    const program = generateProgram({
+      focus: 'strength',
+      mesocycleWeeks: 4,
+      level: 'beginner',
+      sessionsPerWeek: 3,
+      strengthProfile: 'balanced',
+    });
+
+    const model = mapProgramToExportModel(
+      program,
+      {
+        scope: 'all',
+        detail: 'full',
+        pdfMode: 'compact',
+        paperSize: 'letter',
+        orientation: 'auto',
+        grayscale: false,
+        inkSaver: true,
+        includeLegend: true,
+        includeProgressionChart: false,
+      },
+      '2024-01-01T00:00:00.000Z',
+    );
+
+    for (const row of model.sessionRows) {
+      expect(row['Actual Reps']).toBe('');
+      expect(row.Weight).toBe('');
+      expect(row.Notes).toBe('');
     }
   });
 

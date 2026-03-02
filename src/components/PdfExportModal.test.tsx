@@ -18,7 +18,6 @@ function defaultProps() {
     setIncludeLegend: vi.fn(),
     includeProgressionChart: false,
     setIncludeProgressionChart: vi.fn(),
-    exportDetail: 'full' as const,
     isExporting: false,
     onExport: vi.fn(),
     onClose: vi.fn(),

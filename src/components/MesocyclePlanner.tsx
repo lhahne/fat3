@@ -238,6 +238,9 @@ export default function MesocyclePlanner() {
       await exportProgramAsPdf(program, options);
       setExportStatus('Exported PDF file.');
       setIsPdfModalOpen(false);
+      exportPdfButtonRef.current?.focus();
+    } catch {
+      setExportStatus('PDF export failed. Please try again.');
     } finally {
       setIsPdfExporting(false);
     }
@@ -520,7 +523,6 @@ export default function MesocyclePlanner() {
           setIncludeLegend={setIncludeLegend}
           includeProgressionChart={includeProgressionChart}
           setIncludeProgressionChart={setIncludeProgressionChart}
-          exportDetail={exportDetail}
           isExporting={isPdfExporting}
           onExport={handlePdfExport}
           onClose={handleClosePdfModal}

@@ -140,6 +140,52 @@ describe('generateProgram', () => {
 
     expect(adjustedStrengthDay).toBeDefined();
   });
+
+  it('adds exercise-specific warmup patterns for generated strength exercises', () => {
+    const program = generateProgram({
+      focus: 'strength',
+      mesocycleWeeks: 4,
+      level: 'beginner',
+      sessionsPerWeek: 3,
+      strengthProfile: 'balanced',
+    });
+
+    const strengthDay = program.weeks[0].days.find((day) => day.sessionType === 'strength');
+    const mainItems = strengthDay?.workout?.blocks.find((block) => block.title === 'Main work')?.items ?? [];
+    const accessoryItems = strengthDay?.workout?.blocks.find((block) => block.title === 'Accessory work')?.items ?? [];
+    const trunkItems = strengthDay?.workout?.blocks.find((block) => block.title === 'Trunk / power')?.items ?? [];
+
+    expect(mainItems[0]?.name).toBe('Back Squat');
+    expect(mainItems[0]?.warmupPrescription).toBe('40%x8, 60%x5, 75%x3');
+    expect(mainItems[1]?.name).toBe('Bench Press');
+    expect(mainItems[1]?.warmupPrescription).toBe('35%x10, 55%x6, 70%x4');
+    expect(mainItems[2]?.name).toBe('Pull-up');
+    expect(mainItems[2]?.warmupPrescription).toBe('50%x8, 70%x4');
+
+    expect(accessoryItems[1]?.name).toBe('Face Pull');
+    expect(accessoryItems[1]?.warmupPrescription).toBe('1 preparatory set @ ~50% x12');
+
+    expect(trunkItems[0]?.name).toBe('Pallof Press');
+    expect(trunkItems[0]?.warmupPrescription).toBe('No additional ramp sets');
+  });
+
+  it('keeps endurance sessions without exercise-specific warmup prescriptions', () => {
+    const program = generateProgram({
+      focus: 'endurance',
+      mesocycleWeeks: 4,
+      level: 'beginner',
+      sessionsPerWeek: 3,
+      strengthProfile: 'balanced',
+    });
+
+    const enduranceDay = program.weeks[0].days.find((day) => day.sessionType === 'endurance');
+    expect(enduranceDay?.workout?.kind).toBe('endurance');
+
+    const hasWarmupPrescription = enduranceDay?.workout?.blocks.some((block) =>
+      block.items.some((item) => item.warmupPrescription != null),
+    );
+    expect(hasWarmupPrescription).toBe(false);
+  });
 });
 
 describe('getDeloadWeeks', () => {

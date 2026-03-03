@@ -37,4 +37,35 @@ describe('parsePrescription', () => {
   it('returns { sets: 1, warmupSets: 0 } for unrecognized formats', () => {
     expect(parsePrescription('something unknown')).toEqual({ sets: 1, warmupSets: 0 });
   });
+
+  it('uses warmupPrescription with three ramp sets when provided', () => {
+    expect(parsePrescription('4x6 @ 2 RIR', '40%x8, 60%x5, 75%x3')).toEqual({
+      sets: 4,
+      reps: 6,
+      warmupSets: 3,
+      warmupReps: [8, 5, 3],
+    });
+  });
+
+  it('uses warmupPrescription with two ramp sets when provided', () => {
+    expect(parsePrescription('3x8 @ 2 RIR', '50%x8, 70%x4')).toEqual({
+      sets: 3,
+      reps: 8,
+      warmupSets: 2,
+      warmupReps: [8, 4],
+    });
+  });
+
+  it('uses warmupPrescription with one ramp set when provided', () => {
+    expect(parsePrescription('3x12 @ 2 RIR', '1 preparatory set @ ~50% x12')).toEqual({
+      sets: 3,
+      reps: 12,
+      warmupSets: 1,
+      warmupReps: [12],
+    });
+  });
+
+  it('uses zero warmup sets for explicit no-ramp warmupPrescription', () => {
+    expect(parsePrescription('2x8 @ 3 RIR', 'No additional ramp sets')).toEqual({ sets: 2, reps: 8, warmupSets: 0 });
+  });
 });

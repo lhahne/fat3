@@ -38,7 +38,7 @@ export function prepopulateFromHistory(
       const prevKey = exerciseKey(prevWeekIndex, currentDayIndex, block.title, itemIndex);
       const prevExercise = prevDayLog?.exercises[prevKey];
 
-      const parsed = parsePrescription(item.prescription);
+      const parsed = parsePrescription(item.prescription, item.warmupPrescription);
       const sets: SetLog[] = [];
 
       // Prepend warmup sets for strength exercises
@@ -48,7 +48,10 @@ export function prepopulateFromHistory(
         if (prevSet?.weight != null) {
           set.weight = prevSet.weight;
         }
-        if (parsed.reps != null) {
+        const warmupRepTarget = parsed.warmupReps?.[wi];
+        if (warmupRepTarget != null) {
+          set.reps = warmupRepTarget;
+        } else if (parsed.reps != null) {
           set.reps = parsed.reps;
         }
         sets.push(set);

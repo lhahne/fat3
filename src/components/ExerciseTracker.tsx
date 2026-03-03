@@ -2,7 +2,7 @@ import type { ExerciseLog } from '../lib/tracking/types';
 import type { WorkoutItem } from '../lib/planner';
 
 /** Warmup percentages for 2 warmup sets: ~50% and ~75% of working weight */
-const WARMUP_PERCENTAGES = [0.5, 0.75];
+const DEFAULT_WARMUP_PERCENTAGES = [0.5, 0.75];
 
 export type ExerciseTrackerProps = {
   exerciseKey: string;
@@ -19,6 +19,26 @@ function roundToNearest(value: number, step: number): number {
   return Math.round(value / step) * step;
 }
 
+function warmupPercentagesFromPrescription(warmupPrescription?: string): number[] {
+  if (!warmupPrescription || /no additional ramp sets/i.test(warmupPrescription)) {
+    return DEFAULT_WARMUP_PERCENTAGES;
+  }
+
+  const percentages = Array.from(warmupPrescription.matchAll(/(\d+(?:\.\d+)?)%\s*x\d+/gi)).map((match) =>
+    Number(match[1]) / 100,
+  );
+  if (percentages.length > 0) {
+    return percentages;
+  }
+
+  const preparatoryMatch = warmupPrescription.match(/~\s*(\d+(?:\.\d+)?)%/i);
+  if (preparatoryMatch) {
+    return [Number(preparatoryMatch[1]) / 100];
+  }
+
+  return DEFAULT_WARMUP_PERCENTAGES;
+}
+
 export function ExerciseTracker({
   exerciseKey,
   item,
@@ -32,6 +52,7 @@ export function ExerciseTracker({
   // Find the first working set's weight to compute warmup percentages
   const firstWorkingSet = log.sets.find((s) => !s.warmup);
   const workingWeight = firstWorkingSet?.weight;
+  const warmupPercentages = warmupPercentagesFromPrescription(item.warmupPrescription);
 
   let warmupIndex = 0;
 
@@ -53,8 +74,8 @@ export function ExerciseTracker({
         {log.sets.map((set, setIndex) => {
           const isWarmupSet = !!set.warmup;
           let warmupHint: string | undefined;
-          if (isWarmupSet && workingWeight && warmupIndex < WARMUP_PERCENTAGES.length) {
-            const pct = WARMUP_PERCENTAGES[warmupIndex];
+          if (isWarmupSet && workingWeight && warmupIndex < warmupPercentages.length) {
+            const pct = warmupPercentages[warmupIndex];
             const suggested = roundToNearest(workingWeight * pct, 2.5);
             warmupHint = `~${suggested}`;
           }

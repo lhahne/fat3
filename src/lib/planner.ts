@@ -25,6 +25,7 @@ export type WorkoutItem = {
   slot?: string;
   name: string;
   prescription: string;
+  warmupPrescription?: string;
   flags?: string[];
 };
 
@@ -253,6 +254,78 @@ function slotIsLower(slot: string): boolean {
   return slot === 'S1' || slot === 'S4';
 }
 
+function getExerciseWarmupPrescription(exerciseName: string): string {
+  const name = exerciseName.toLowerCase();
+
+  const hasAny = (keywords: string[]): boolean => keywords.some((keyword) => name.includes(keyword));
+
+  if (
+    hasAny([
+      'plank',
+      'pallof',
+      'carry',
+      'dead bug',
+      'copenhagen',
+      'bird dog',
+      'ab wheel',
+      'mobility',
+      'stretch',
+      'flow',
+      'med ball',
+      'slam',
+      'kb swing',
+      'trap bar jump',
+    ])
+  ) {
+    return 'No additional ramp sets';
+  }
+
+  if (hasAny(['squat', 'deadlift', 'rdl', 'good morning', 'hinge'])) {
+    return '40%x8, 60%x5, 75%x3';
+  }
+
+  if (hasAny(['bench', 'overhead press', 'press', 'push-up', 'dip'])) {
+    return '35%x10, 55%x6, 70%x4';
+  }
+
+  if (
+    hasAny([
+      'raise',
+      'curl',
+      'extension',
+      'fly',
+      'pressdown',
+      'calf',
+      'face pull',
+      'external rotation',
+      'tibialis',
+      'soleus',
+    ])
+  ) {
+    return '1 preparatory set @ ~50% x12';
+  }
+
+  if (
+    hasAny([
+      'row',
+      'pull-up',
+      'pulldown',
+      'lunge',
+      'split squat',
+      'step-up',
+      'hip thrust',
+      'leg press',
+      'goblet squat',
+      'glute bridge',
+      'hamstring curl',
+    ])
+  ) {
+    return '50%x8, 70%x4';
+  }
+
+  return '50%x8, 70%x4';
+}
+
 function getPrescription(objective: WeekObjective, isMain: boolean): SessionPrescription {
   if (isMain) {
     if (objective === 'push') return { sets: 5, reps: '4', rir: 1 };
@@ -445,6 +518,7 @@ function generateStrengthWorkout(
       slot,
       name: chosen,
       prescription: toPrescriptionString(adjusted),
+      warmupPrescription: getExerciseWarmupPrescription(chosen),
       ...(slotIsLower(slot) && cardioCollision ? { flags: ['cardio-collision-adjusted'] } : {}),
     };
   });
@@ -464,6 +538,7 @@ function generateStrengthWorkout(
       slot,
       name: chosen,
       prescription: toPrescriptionString(adjusted),
+      warmupPrescription: getExerciseWarmupPrescription(chosen),
       ...(slotIsLower(slot) && cardioCollision ? { flags: ['cardio-collision-adjusted'] } : {}),
     };
   });
@@ -471,7 +546,12 @@ function generateStrengthWorkout(
   const trunkExercise = chooseExercise(dayTemplate.S6, weekIndex, variantOffset);
   const includeTrunk = objective !== 'deload' || profile !== 'endurance-support';
   const trunkItems: WorkoutItem[] = includeTrunk
-    ? [{ slot: 'S6', name: trunkExercise, prescription: '2x8 @ 3 RIR' }]
+    ? [{
+        slot: 'S6',
+        name: trunkExercise,
+        prescription: '2x8 @ 3 RIR',
+        warmupPrescription: getExerciseWarmupPrescription(trunkExercise),
+      }]
     : [];
 
   return {

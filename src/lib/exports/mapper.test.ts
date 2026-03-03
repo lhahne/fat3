@@ -156,6 +156,7 @@ describe('mapProgramToExportModel', () => {
     expect(model.workoutRows.length).toBeGreaterThan(0);
     expect(model.workoutRows[0]).toHaveProperty('Exercise');
     expect(model.workoutRows[0]).toHaveProperty('Prescription');
+    expect(model.workoutRows[0]).toHaveProperty('Warm-up');
   });
 
   it('progression rows include Mixed Sessions column with numeric values', () => {
@@ -309,5 +310,59 @@ describe('mapProgramToExportModel', () => {
     );
 
     expect(model.overview.some((row) => row.key === 'Generated At')).toBe(false);
+  });
+
+  it('maps exercise-specific warmup guidance into workout rows', () => {
+    const program = generateProgram({
+      focus: 'strength',
+      mesocycleWeeks: 4,
+      level: 'beginner',
+      sessionsPerWeek: 3,
+      strengthProfile: 'balanced',
+    });
+
+    const model = mapProgramToExportModel(
+      program,
+      {
+        scope: 'all',
+        detail: 'full',
+        pdfMode: 'compact',
+        paperSize: 'letter',
+        orientation: 'auto',
+        grayscale: false,
+        inkSaver: true,
+        includeLegend: true,
+        includeProgressionChart: false,
+      },
+      '2024-01-01T00:00:00.000Z',
+    );
+
+    const mainLiftRow = model.workoutRows.find((row) => row.Exercise === 'Back Squat');
+    expect(mainLiftRow?.['Warm-up']).toBe('40%x8, 60%x5, 75%x3');
+
+    const enduranceProgram = generateProgram({
+      focus: 'endurance',
+      mesocycleWeeks: 4,
+      level: 'beginner',
+      sessionsPerWeek: 3,
+      strengthProfile: 'balanced',
+    });
+    const enduranceModel = mapProgramToExportModel(
+      enduranceProgram,
+      {
+        scope: 'all',
+        detail: 'full',
+        pdfMode: 'compact',
+        paperSize: 'letter',
+        orientation: 'auto',
+        grayscale: false,
+        inkSaver: true,
+        includeLegend: true,
+        includeProgressionChart: false,
+      },
+      '2024-01-01T00:00:00.000Z',
+    );
+    const enduranceRow = enduranceModel.workoutRows.find((row) => row['Session Type'] === 'endurance');
+    expect(enduranceRow?.['Warm-up']).toBe('');
   });
 });

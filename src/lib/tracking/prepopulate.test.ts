@@ -169,4 +169,34 @@ describe('prepopulateFromHistory', () => {
     const result = prepopulateFromHistory(program, {}, 0, 1);
     expect(result.exercises).toEqual({});
   });
+
+  it('uses exercise-specific warmup prescriptions when computing warmup set counts', () => {
+    const program = makeProgram(2);
+    const workout = program.weeks[0].days[0].workout;
+    if (!workout) throw new Error('expected workout');
+
+    workout.blocks[1].items[0].warmupPrescription = '40%x8, 60%x5, 75%x3';
+    workout.blocks[1].items[1].warmupPrescription = '1 preparatory set @ ~50% x12';
+
+    const result = prepopulateFromHistory(program, {}, 0, 0);
+
+    const s1 = result.exercises['0-0-Main-0'].sets;
+    const s2 = result.exercises['0-0-Main-1'].sets;
+
+    // S1 prescription is 3x6, plus 3 warmup sets
+    expect(s1).toHaveLength(6);
+    expect(s1[0].warmup).toBe(true);
+    expect(s1[1].warmup).toBe(true);
+    expect(s1[2].warmup).toBe(true);
+    expect(s1[0].reps).toBe(8);
+    expect(s1[1].reps).toBe(5);
+    expect(s1[2].reps).toBe(3);
+    expect(s1[3].warmup).toBeUndefined();
+
+    // S2 prescription is 3x8, plus 1 warmup set
+    expect(s2).toHaveLength(4);
+    expect(s2[0].warmup).toBe(true);
+    expect(s2[0].reps).toBe(12);
+    expect(s2[1].warmup).toBeUndefined();
+  });
 });

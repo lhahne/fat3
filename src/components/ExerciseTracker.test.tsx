@@ -116,4 +116,28 @@ describe('ExerciseTracker', () => {
     const warmupWeightInputs = screen.getAllByPlaceholderText('kg');
     expect(warmupWeightInputs.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('uses warmupPrescription percentages for warmup weight placeholders', () => {
+    const itemWithWarmup: WorkoutItem = {
+      ...defaultItem,
+      warmupPrescription: '40%x8, 60%x5, 75%x3',
+    };
+    const logWithThreeWarmups: ExerciseLog = {
+      sets: [
+        { completed: false, reps: 8, warmup: true },
+        { completed: false, reps: 5, warmup: true },
+        { completed: false, reps: 3, warmup: true },
+        { completed: false, weight: 100, reps: 6 },
+      ],
+    };
+
+    render(<ExerciseTracker {...defaultProps} item={itemWithWarmup} log={logWithThreeWarmups} />);
+    const warmupWeightInputs = screen.getAllByRole('spinbutton').filter(
+      (el) => el.getAttribute('aria-label')?.includes('warmup'),
+    );
+    expect(warmupWeightInputs).toHaveLength(3);
+    expect(warmupWeightInputs[0]).toHaveAttribute('placeholder', '~40');
+    expect(warmupWeightInputs[1]).toHaveAttribute('placeholder', '~60');
+    expect(warmupWeightInputs[2]).toHaveAttribute('placeholder', '~75');
+  });
 });

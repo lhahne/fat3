@@ -121,6 +121,7 @@ describe('MesocyclePlanner', () => {
     expect(screen.getAllByText('Lower + Push Build').length).toBeGreaterThan(0);
     expect(screen.getByText('Profile: Endurance Support Strength')).toBeInTheDocument();
     expect(screen.getAllByText(/RIR/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Warm-up:/).length).toBeGreaterThan(0);
   });
 
   it('opens PDF settings in a modal and exports from there', async () => {

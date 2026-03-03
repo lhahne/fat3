@@ -509,6 +509,7 @@ export default function MesocyclePlanner({ onStartTracking }: MesocyclePlannerPr
                   {block.items.map((item) => (
                     <li key={`${block.title}-${item.name}`}>
                       {item.name}: {item.prescription}
+                      {item.warmupPrescription ? ` (Warm-up: ${item.warmupPrescription})` : ''}
                     </li>
                   ))}
                 </ul>

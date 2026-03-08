@@ -5,33 +5,38 @@
 
 .tab-bar {
   display: flex;
-  gap: 0.25rem;
-  padding: 0.5rem 2rem 0;
+  gap: 0.375rem;
+  padding: 0.625rem 2rem 0;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
 }
 
 .tab-button {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
+  padding: 0.5rem 1.1rem;
+  border: 1px solid transparent;
   border-bottom: none;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  background: var(--bg-subtle);
+  background: transparent;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-family: inherit;
+  font-size: 0.8rem;
   font-weight: 500;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: all var(--transition-fast);
+  position: relative;
 }
 
 .tab-button:hover {
-  background: var(--bg-panel);
+  background: var(--bg-subtle);
   color: var(--text-primary);
 }
 
 .tab-button.is-active {
   background: var(--bg-page);
-  color: var(--text-primary);
+  color: var(--accent);
+  font-weight: 600;
+  border-color: var(--border);
   border-bottom: 1px solid var(--bg-page);
   margin-bottom: -1px;
 }

@@ -13,9 +13,11 @@
 }
 
 .tracking-sidebar h2 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 1rem;
+  letter-spacing: -0.02em;
 }
 
 .week-nav {
@@ -24,7 +26,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
 .week-nav-button {
@@ -32,18 +34,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
+  padding: 0.55rem 0.85rem;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-panel);
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-family: inherit;
+  font-size: 0.825rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .week-nav-button:hover {
   background: var(--bg-subtle);
+  border-color: var(--border-strong);
 }
 
 .week-nav-button.is-active {
@@ -51,11 +56,13 @@
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+  box-shadow: 0 2px 8px var(--accent-glow);
 }
 
 .week-progress {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-tertiary);
+  font-weight: 500;
 }
 
 .week-nav-button.has-data {
@@ -72,31 +79,38 @@
   color: var(--strength);
 }
 
+/* ─── Action Buttons ─── */
+
 .stop-tracking-button,
 .export-tracking-button {
   width: 100%;
   margin-top: 0.5rem;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
+  padding: 0.55rem;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-family: inherit;
+  font-size: 0.775rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all var(--transition-fast);
 }
 
 .export-tracking-button {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   border-color: var(--accent);
+  box-shadow: 0 2px 6px var(--accent-glow);
 }
 
 .export-tracking-button:hover {
-  background: var(--accent-hover);
+  box-shadow: 0 4px 12px var(--accent-glow);
+  transform: translateY(-1px);
 }
 
 .export-tracking-button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .stop-tracking-button {
@@ -107,14 +121,17 @@
 .stop-tracking-button:hover {
   background: var(--bg-subtle);
   color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
-/* Day selector */
+/* ─── Day Selector ─── */
 
 .day-selector h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 1rem;
+  letter-spacing: -0.01em;
 }
 
 .day-buttons {
@@ -126,19 +143,21 @@
 .day-select-button {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
   padding: 1rem;
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-panel);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  transition: all var(--transition-smooth);
 }
 
 .day-select-button:hover {
   border-color: var(--accent);
   box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
 .day-select-button.is-complete {
@@ -147,12 +166,12 @@
 }
 
 .day-select-button strong {
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   color: var(--text-primary);
 }
 
 .day-select-button span {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
@@ -169,25 +188,30 @@
 .in-progress-mark {
   color: var(--mixed);
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
 }
 
 .back-button {
   margin-bottom: 1rem;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--border);
+  padding: 0.4rem 0.85rem;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-panel);
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-family: inherit;
+  font-size: 0.775rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .back-button:hover {
   background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
-/* Session tracker */
+/* ─── Session Tracker ─── */
 
 .session-tracker {
   max-width: 700px;
@@ -200,27 +224,30 @@
 .session-header h3 {
   margin: 0;
   font-size: 1.1rem;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .session-title {
-  margin: 0.25rem 0 0;
+  margin: 0.3rem 0 0;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .session-complete-badge {
   display: inline-block;
   margin-top: 0.5rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.7rem;
   border-radius: var(--radius-sm);
   background: var(--strength-bg);
   color: var(--strength);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-/* Blocks */
+/* ─── Blocks ─── */
 
 .tracking-block {
   margin-bottom: 1.5rem;
@@ -231,12 +258,13 @@
 }
 
 .block-title {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 600;
   margin: 0 0 0.75rem;
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -244,14 +272,19 @@
   color: var(--deload);
 }
 
-/* Exercise tracker */
+/* ─── Exercise Tracker ─── */
 
 .exercise-tracker {
   margin-bottom: 1.25rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
+  padding: 0.85rem;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-panel);
+  transition: border-color var(--transition-fast);
+}
+
+.exercise-tracker:hover {
+  border-color: var(--border-strong);
 }
 
 .exercise-tracker.is-warmup {
@@ -268,24 +301,25 @@
 
 .exercise-name {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-primary);
 }
 
 .exercise-prescription {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .exercise-slot {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-tertiary);
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.45rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  font-weight: 500;
 }
 
-/* Sets grid */
+/* ─── Sets Grid ─── */
 
 .sets-grid {
   font-size: 0.8rem;
@@ -297,33 +331,37 @@
   gap: 0.5rem;
   padding: 0.25rem 0;
   color: var(--text-tertiary);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .set-row {
   display: grid;
   grid-template-columns: 2rem 5rem 4rem 2.5rem;
   gap: 0.5rem;
-  padding: 0.25rem 0;
+  padding: 0.3rem 0;
   align-items: center;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
 
 .set-row.is-completed {
-  opacity: 0.65;
+  opacity: 0.6;
 }
 
 .set-row.is-warmup-set {
   background: var(--bg-subtle);
   box-shadow: inset 3px 0 0 var(--deload);
   border-radius: var(--radius-sm);
+  padding-left: 0.25rem;
 }
 
 .set-row.is-warmup-set .set-number {
   color: var(--deload);
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 .set-row.is-warmup-set .weight-input {
@@ -332,7 +370,8 @@
 
 .set-number {
   color: var(--text-tertiary);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 500;
   text-align: center;
 }
 
@@ -343,19 +382,22 @@
 .weight-input,
 .reps-input {
   width: 100%;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid var(--border);
+  padding: 0.35rem 0.45rem;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-input);
   color: var(--text-primary);
+  font-family: inherit;
   font-size: 0.8rem;
   text-align: right;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .weight-input:focus,
 .reps-input:focus {
   outline: none;
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .set-checkbox {
@@ -371,20 +413,23 @@
 
 .notes-input {
   width: 100%;
-  padding: 0.3rem 0.5rem;
-  border: 1px solid var(--border);
+  padding: 0.35rem 0.55rem;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-input);
   color: var(--text-primary);
-  font-size: 0.8rem;
+  font-family: inherit;
+  font-size: 0.775rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .notes-input:focus {
   outline: none;
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* Responsive */
+/* ─── Responsive ─── */
 
 @media (max-width: 800px) {
   .tracking-view {
